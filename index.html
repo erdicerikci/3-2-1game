@@ -165,7 +165,6 @@
           <select id="soloPoolFilter">
             <option value="Hepsi">Kulüp + Milli Takımlar</option>
             <option value="Kulup">Sadece Kulüpler</option>
-            <option value="Milli">Sadece Milli Takımlar</option>
           </select>
         </div>
       </div>
@@ -190,7 +189,6 @@
           <select id="mpFilterSelect" style="margin-bottom:12px;">
             <option value="Hepsi">Kulüp + Milli Takımlar</option>
             <option value="Kulup">Sadece Kulüpler</option>
-            <option value="Milli">Sadece Milli Takımlar</option>
           </select>
           <button class="btn-primary" onclick="odaKur()">Oda Oluştur</button>
         </div>
@@ -563,8 +561,10 @@
     }
 
     function tekliHazirim() {
+      const secilenMilliMi = ALL_NATIONALS.some(n => n.toLowerCase() === gercekTakim.toLowerCase());
+      const rakipHavuzu = secilenMilliMi ? ALL_CLUBS : havuz;
       const secilen = document.getElementById("soloTeamInput").value.trim();
-      const havuz = getFilteredTeams(document.getElementById("soloPoolFilter").value);
+      const rakipHavuzu = getFilteredTeams(document.getElementById("soloPoolFilter").value);
       const gercekTakim = havuz.find(t => t.toLowerCase() === secilen.toLowerCase());
 
       if (!gercekTakim) return toast("Lütfen açılan listeden geçerli bir takım seç.");
