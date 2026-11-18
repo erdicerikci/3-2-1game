@@ -495,7 +495,6 @@
 
     function getFilteredTeams(filter) {
       if (filter === "Kulup") return ALL_CLUBS;
-      if (filter === "Milli") return ALL_NATIONALS;
       return [...ALL_CLUBS, ...ALL_NATIONALS];
     }
 
@@ -561,18 +560,20 @@
     }
 
     function tekliHazirim() {
-      const secilenMilliMi = ALL_NATIONALS.some(n => n.toLowerCase() === gercekTakim.toLowerCase());
-      const rakipHavuzu = secilenMilliMi ? ALL_CLUBS : havuz;
       const secilen = document.getElementById("soloTeamInput").value.trim();
-      const rakipHavuzu = getFilteredTeams(document.getElementById("soloPoolFilter").value);
+      const havuz = getFilteredTeams(document.getElementById("soloPoolFilter").value);
       const gercekTakim = havuz.find(t => t.toLowerCase() === secilen.toLowerCase());
 
       if (!gercekTakim) return toast("Lütfen açılan listeden geçerli bir takım seç.");
 
+      // Kullanıcı milli takım seçtiyse bot karşısına sadece kulüp takımı çıkarsın
+      const secilenMilliMi = ALL_NATIONALS.some(n => n.toLowerCase() === gercekTakim.toLowerCase());
+      const rakipHavuzu = secilenMilliMi ? ALL_CLUBS : havuz;
+
       const zorluk = document.getElementById("soloDifficulty").value;
       const adaylar = [];
 
-      for (const aday of havuz) {
+      for (const aday of rakipHavuzu) {
         if (aday.toLowerCase() === gercekTakim.toLowerCase()) continue;
         const ortak = bulOrtakOyuncular(gercekTakim, aday);
         if (ortak.length === 0) continue;
@@ -583,7 +584,7 @@
       }
 
       if (adaylar.length === 0) {
-        for (const aday of havuz) {
+        for (const aday of rakipHavuzu) {
           if (aday.toLowerCase() !== gercekTakim.toLowerCase() && bulOrtakOyuncular(gercekTakim, aday).length > 0) {
             adaylar.push(aday);
           }
@@ -619,7 +620,7 @@
 
       document.getElementById("mpRoomTitle").textContent = res.odaKodu;
       document.getElementById("mpDisplayCode").textContent = res.odaKodu;
-      document.getElementById("mpFilterBadge").textContent = filtre;
+      document.getElementById("mpFilterBadge").textContent = filtre === "Kulup" ? "Sadece Kulüpler" : "Kulüp + Milli";
       document.getElementById("mpWaitingGuest").classList.remove("hidden");
       document.getElementById("mpTeamSelectArea").classList.add("hidden");
       ekranGoster("screen-mp-setup");
@@ -643,7 +644,7 @@
       GAME.countdownStartedForRound = 0;
 
       document.getElementById("mpRoomTitle").textContent = kod;
-      document.getElementById("mpFilterBadge").textContent = GAME.mpFilter;
+      document.getElementById("mpFilterBadge").textContent = GAME.mpFilter === "Kulup" ? "Sadece Kulüpler" : "Kulüp + Milli";
       document.getElementById("mpWaitingGuest").classList.add("hidden");
       document.getElementById("mpTeamSelectArea").classList.remove("hidden");
       document.getElementById("mpTeamInput").value = "";
