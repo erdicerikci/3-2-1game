@@ -103,7 +103,7 @@
     </header>
 
     <div class="status-bar">
-      <div id="dbStatus"><span class="badge badge-load">⏳ Dünya futbol veritabanı indiriliyor...</span></div>
+      <div id="dbStatus"><span class="badge badge-load">⏳ Futbol veritabanı yükleniyor...</span></div>
       <div id="userBarRight" class="hidden" style="display:flex; align-items:center; gap:8px;">
         <span id="aktifKullaniciLabel" style="font-weight:700; color:#34d399;"></span>
         <button class="btn-outline btn-sm" onclick="cikisYap()">Çıkış Yap</button>
@@ -156,7 +156,7 @@
           <label>Zorluk Seviyesi</label>
           <select id="soloDifficulty">
             <option value="Kolay">Kolay (Bol ortak oyuncu, bot 20. sn'de bilir)</option>
-            <option value="Orta" selected>Orta (2-5 ortak oyuncu, bot 14. sn'de bilir)</option>
+            <option value="Orta" selected>Orta (2-6 ortak oyuncu, bot 14. sn'de bilir)</option>
             <option value="Zor">Zor (Nokta atışı 1-2 ortak oyuncu, bot 8. sn'de bilir)</option>
           </select>
         </div>
@@ -325,22 +325,6 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbw19QFFWeqmHuK6voIzxjrtDc8E8-NAiVBjusSLerraNAAJf03r4V49NWGA3nWwU16Njw/exec";
 
-    // Doğrudan GitHub Raw ve jsDelivr üzerinden tüm futbolcu & transfer dosyaları
-    const DATA_MIRRORS = [
-      {
-        players: "https://raw.githubusercontent.com/dcaribou/transfermarkt-datasets/master/data/players.csv",
-        transfers: "https://raw.githubusercontent.com/dcaribou/transfermarkt-datasets/master/data/transfers.csv"
-      },
-      {
-        players: "https://raw.githubusercontent.com/salimt/football-datasets/main/datalake/transfermarkt/player_profiles/player_profiles.csv",
-        transfers: "https://raw.githubusercontent.com/salimt/football-datasets/main/datalake/transfermarkt/transfers/transfers.csv"
-      },
-      {
-        players: "https://cdn.jsdelivr.net/gh/dcaribou/transfermarkt-datasets@master/data/players.csv",
-        transfers: "https://cdn.jsdelivr.net/gh/dcaribou/transfermarkt-datasets@master/data/transfers.csv"
-      }
-    ];
-
     let PLAYERS = [];
     let ALL_CLUBS = [];
     let ALL_NATIONALS = [];
@@ -435,97 +419,45 @@
     }
 
     // =========================================================================
-    // TAM FUTBOLCU & TAKIM VERİTABANINI İNDİRME
+    // YEREL dcaribou JSON VERİTABANINI YÜKLE (./players.json)
     // =========================================================================
-    async function fetchTextWithTimeout(url, ms = 25000) {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), ms);
-      try {
-        const res = await fetch(url, { signal: ctrl.signal });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return await res.text();
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-
     async function veritabaniniYukle() {
       const statusEl = document.getElementById("dbStatus");
-      let loaded = false;
+      try {
+        statusEl.innerHTML = `<span class="badge badge-load">⏳ Futbol veritabanı yükleniyor...</span>`;
+        const res = await fetch("./players.json");
+        if (!res.ok) throw new Error("players.json bulunamadı (HTTP " + res.status + ")");
 
-      for (let m = 0; m < DATA_MIRRORS.length; m++) {
-        try {
-          statusEl.innerHTML = `<span class="badge badge-load">⏳ Futbolcu & transfer verileri indiriliyor (${m + 1}/${DATA_MIRRORS.length})...</span>`;
-          const [pText, tText] = await Promise.all([
-            fetchTextWithTimeout(DATA_MIRRORS[m].players, 30000),
-            fetchTextWithTimeout(DATA_MIRRORS[m].transfers, 30000)
-          ]);
+        const list = await res.json();
+        PLAYERS = [];
+        TEAM_TO_PLAYERS = {};
+        const clubSet = new Set();
+        const natSet = new Set();
 
-          const pRows = parseCSV(pText);
-          const tRows = parseCSV(tText);
+        for (const item of list) {
+          const pObj = {
+            name: item.n,
+            teams: item.c || [],
+            national: item.m || ""
+          };
+          if (!pObj.name) continue;
 
-          const pHead = pRows[0].map(h => h.trim().toLowerCase());
-          const idxId = pHead.indexOf("player_id");
-          const idxName = pHead.indexOf("name") > -1 ? pHead.indexOf("name") : pHead.indexOf("player_name");
-          const idxCit = pHead.indexOf("country_of_citizenship") > -1 ? pHead.indexOf("country_of_citizenship") : pHead.indexOf("citizenship");
-          const idxCurr = pHead.indexOf("current_club_name");
+          pObj.teams.forEach(t => clubSet.add(t));
+          if (pObj.national) natSet.add(pObj.national);
 
-          const tHead = tRows[0].map(h => h.trim().toLowerCase());
-          const tId = tHead.indexOf("player_id");
-          const tFrom = tHead.indexOf("from_club_name");
-          const tTo = tHead.indexOf("to_club_name");
-
-          const clubMap = {};
-          for (let i = 1; i < tRows.length; i++) {
-            const r = tRows[i];
-            const pid = r[tId];
-            if (!pid) continue;
-            if (!clubMap[pid]) clubMap[pid] = new Set();
-            if (r[tFrom]) clubMap[pid].add(r[tFrom].trim());
-            if (r[tTo]) clubMap[pid].add(r[tTo].trim());
-          }
-
-          const clubSet = new Set();
-          const natSet = new Set();
-          const yasakli = new Set(["Retired", "Without Club", "Unknown", "Career break", "Ban"]);
-
-          for (let i = 1; i < pRows.length; i++) {
-            const r = pRows[i];
-            const pid = r[idxId];
-            const name = (r[idxName] || "").trim();
-            if (!pid || !name) continue;
-
-            if (!clubMap[pid]) clubMap[pid] = new Set();
-            const curr = (r[idxCurr] || "").trim();
-            if (curr && !yasakli.has(curr)) clubMap[pid].add(curr);
-
-            const teams = Array.from(clubMap[pid]).filter(c => c && !yasakli.has(c) && !c.includes("U19") && !c.includes("U17") && !c.includes("Youth"));
-            const nat = (r[idxCit] || "").split(",")[0].trim();
-
-            if (teams.length === 0 && !nat) continue;
-
-            teams.forEach(t => clubSet.add(t));
-            if (nat) natSet.add(nat);
-
-            const pObj = { name, teams, national: nat };
-            PLAYERS.push(pObj);
-            indeksleOyuncu(pObj);
-          }
-
-          ALL_CLUBS = Array.from(clubSet).sort();
-          ALL_NATIONALS = Array.from(natSet).sort();
-          statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.length.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
-          loaded = true;
-          break;
-        } catch (err) {
-          console.warn("Mirror başarısız:", DATA_MIRRORS[m].players, err);
+          PLAYERS.push(pObj);
+          indeksleOyuncu(pObj);
         }
-      }
 
-      if (!loaded) {
-        statusEl.innerHTML = `<span class="badge badge-load">⚠️ Harici JSON sunucusuna şu an ulaşılamadı, sayfayı yenileyin.</span>`;
+        ALL_CLUBS = Array.from(clubSet).sort();
+        ALL_NATIONALS = Array.from(natSet).sort();
+
+        statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.length.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
+        baglaAutocomplete();
+      } catch (err) {
+        console.error(err);
+        statusEl.innerHTML = `<span class="badge badge-load">⚠️ players.json yüklenemedi, sayfayı yenileyin.</span>`;
       }
-      baglaAutocomplete();
     }
 
     function indeksleOyuncu(pObj) {
@@ -536,24 +468,6 @@
         if (!TEAM_TO_PLAYERS[key]) TEAM_TO_PLAYERS[key] = [];
         if (!TEAM_TO_PLAYERS[key].includes(pObj)) TEAM_TO_PLAYERS[key].push(pObj);
       });
-    }
-
-    function parseCSV(str) {
-      const arr = [];
-      let quote = false, row = [], col = "";
-      for (let i = 0; i < str.length; i++) {
-        const c = str[i], nc = str[i + 1];
-        if (c === '"' && quote && nc === '"') { col += '"'; i++; continue; }
-        if (c === '"') { quote = !quote; continue; }
-        if (c === ',' && !quote) { row.push(col); col = ""; continue; }
-        if ((c === '\n' || c === '\r') && !quote) {
-          if (c === '\r' && nc === '\n') i++;
-          row.push(col); arr.push(row); row = []; col = ""; continue;
-        }
-        col += c;
-      }
-      if (col || row.length) { row.push(col); arr.push(row); }
-      return arr;
     }
 
     // =========================================================================
