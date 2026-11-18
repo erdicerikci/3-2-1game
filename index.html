@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3, 2, 1: Ortak Oyuncu | Futbol Bilgi Oyunu</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #131c31;
+      --card-2: #1b2640;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --blue: #3b82f6;
+      --amber: #f59e0b;
+      --danger: #ef4444;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #263452;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; }
+    .container { width: 100%; max-width: 760px; }
+    header { text-align: center; margin-bottom: 18px; }
+    header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, #10b981, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    header p { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
+
+    .status-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.85rem; gap: 10px; flex-wrap: wrap; }
+    .badge { padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 0.78rem; }
+    .badge-ok { background: rgba(16,185,129,0.18); color: #34d399; }
+    .badge-load { background: rgba(245,158,11,0.18); color: #fbbf24; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); }
+    .hidden { display: none !important; }
+
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .col { flex: 1; min-width: 220px; }
+    label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    input, select { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.96rem; outline: none; transition: border-color 0.2s; }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    button { cursor: pointer; border: none; border-radius: 10px; padding: 12px 18px; font-weight: 700; font-size: 0.95rem; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #042f2e; width: 100%; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); color: #fff; }
+    .btn-blue { background: var(--blue); color: #fff; width: 100%; }
+    .btn-blue:hover:not(:disabled) { background: #2563eb; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover:not(:disabled) { background: var(--card-2); }
+    .btn-sm { padding: 7px 12px; font-size: 0.82rem; }
+
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+    @media (max-width: 560px) { .mode-grid { grid-template-columns: 1fr; } }
+    .mode-box { background: var(--card-2); border: 1px solid var(--border); border-radius: 14px; padding: 18px; text-align: center; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
+    .mode-box:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .mode-box h3 { font-size: 1.15rem; margin-bottom: 6px; }
+    .mode-box p { font-size: 0.84rem; color: var(--muted); }
+
+    /* Autocomplete */
+    .ac-wrap { position: relative; }
+    .ac-list { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid var(--border); border-radius: 10px; max-height: 220px; overflow-y: auto; z-index: 50; margin-top: 4px; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+    .ac-item { padding: 10px 14px; cursor: pointer; font-size: 0.92rem; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; }
+    .ac-item:hover, .ac-item.active { background: var(--accent); color: #042f2e; font-weight: 700; }
+
+    /* Countdown Overlay */
+    .countdown-box { text-align: center; padding: 40px 20px; }
+    .countdown-num { font-size: 5.5rem; font-weight: 900; color: var(--amber); animation: pulse 0.8s infinite; line-height: 1; }
+    @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
+
+    /* Versus Arena */
+    .arena-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-weight: 700; }
+    .timer-pill { background: rgba(239,68,68,0.18); color: #f87171; padding: 6px 14px; border-radius: 999px; font-size: 1.1rem; font-weight: 800; border: 1px solid rgba(239,68,68,0.4); }
+    .vs-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin: 16px 0; }
+    .team-card { background: var(--card-2); border: 2px solid var(--border); border-radius: 14px; padding: 18px 12px; text-align: center; }
+    .team-card .tag { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .team-card .name { font-size: 1.25rem; font-weight: 800; margin-top: 6px; color: #fff; }
+    .vs-badge { font-weight: 900; color: var(--amber); font-size: 1.2rem; }
+
+    /* Aa Tabi Ya Card */
+    .reveal-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.35); border-radius: 14px; padding: 16px; margin-top: 16px; }
+    .reveal-box h4 { color: #34d399; margin-bottom: 10px; font-size: 1rem; }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { background: var(--card-2); border: 1px solid var(--border); padding: 6px 11px; border-radius: 999px; font-size: 0.83rem; font-weight: 600; }
+    .chip.highlight { background: var(--accent); color: #042f2e; border-color: var(--accent); }
+
+    /* Room Code */
+    .room-code-box { background: var(--bg); border: 2px dashed var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 12px 0; }
+    .room-code-box span { font-size: 2rem; font-weight: 900; letter-spacing: 4px; color: var(--accent); }
+
+    /* Leaderboard */
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tab-btn { flex: 1; min-width: 130px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); padding: 9px 10px; font-size: 0.82rem; }
+    .tab-btn.active { background: var(--accent); color: #042f2e; border-color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; border: 1px solid var(--accent); padding: 12px 20px; border-radius: 12px; font-weight: 600; z-index: 999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>3, 2, 1: ORTAK OYUNCU</h1>
+      <p>İki takımda da forma giymiş futbolcuyu rakipten önce bul!</p>
+    </header>
+
+    <div class="status-bar">
+      <div id="dbStatus"><span class="badge badge-load">⏳ Futbolcu veritabanı yükleniyor...</span></div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span id="aktifKullaniciLabel" style="color:var(--muted);">Misafir</span>
+        <button class="btn-outline btn-sm" onclick="ekranGoster('screen-login')">Oyuncu Değiştir</button>
+      </div>
+    </div>
+
+    <!-- 1. GİRİŞ / KULLANICI ADI -->
+    <div id="screen-login" class="card">
+      <h3 style="margin-bottom:12px;">Oyuncu Bilgisi</h3>
+      <div class="row">
+        <div class="col">
+          <label>Kullanıcı Adın (Liderlik Tablosu İçin)</label>
+          <input type="text" id="inputUsername" placeholder="Örn: erdi_hoca veya TakmaAd" />
+        </div>
+        <div class="col" style="max-width:180px;">
+          <label>Rol</label>
+          <select id="inputRole">
+            <option value="Ogrenci">Öğrenci</option>
+            <option value="Ogretmen">Öğretmen</option>
+            <option value="Misafir" selected>Misafir</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn-primary" onclick="kullaniciKaydet()">Devam Et</button>
+      </div>
+    </div>
+
+    <!-- 2. ANA MENÜ -->
+    <div id="screen-menu" class="card hidden">
+      <h3 style="margin-bottom:6px;">Oyun Modu Seç</h3>
+      <p style="color:var(--muted); font-size:0.88rem;">3 raund üzerinden oynanır. Her raundda tek tahmin hakkın vardır!</p>
+      <div class="mode-grid">
+        <div class="mode-box" onclick="tekliModHazirla()">
+          <h3>🤖 Tek Oyunculu</h3>
+          <p>Sen takımını yaz, bot da kesişen bir takım seçsin. Süre dolmadan botu geç!</p>
+        </div>
+        <div class="mode-box" onclick="ekranGoster('screen-lobby')">
+          <h3>⚔️ Çoklu Oyuncu (1v1)</h3>
+          <p>Oda kur veya kodla katıl. İkiniz de takımınızı gizlice yazın, 3-2-1 ile kapışın!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TEKLİ OYUNCU AYAR & TAKIM SEÇİMİ -->
+    <div id="screen-solo-setup" class="card hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3>🤖 Tek Oyunculu — Raund <span id="soloRoundNum">1</span>/3</h3>
+        <span style="font-weight:700; color:var(--accent);">Puan: <span id="soloTotalScore">0</span></span>
+      </div>
+      <div class="row" style="margin-bottom:12px;">
+        <div class="col">
+          <label>Zorluk Seviyesi (Bot Hızı & Kesişim Sayısı)</label>
+          <select id="soloDifficulty">
+            <option value="Kolay">Kolay (Bol ortak oyuncu, bot 20. sn'de bilir)</option>
+            <option value="Orta" selected>Orta (2-5 ortak oyuncu, bot 14. sn'de bilir)</option>
+            <option value="Zor">Zor (Nokta atışı 1-2 ortak oyuncu, bot 8. sn'de bilir)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Takım Havuzu</label>
+          <select id="soloPoolFilter">
+            <option value="Hepsi">Kulüp + Milli Takımlar</option>
+            <option value="Kulup">Sadece Kulüpler</option>
+            <option value="Milli">Sadece Milli Takımlar</option>
+          </select>
+        </div>
+      </div>
+      <div class="ac-wrap">
+        <label>Senin Takımın / Milli Takımın (En az 3 harf yaz)</label>
+        <input type="text" id="soloTeamInput" placeholder="Örn: Galatasaray, Real Madrid, Turkiye..." autocomplete="off" />
+        <div id="soloTeamAC" class="ac-list hidden"></div>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <button class="btn-outline" style="flex:1;" onclick="ekranGoster('screen-menu')">Ana Menü</button>
+        <button class="btn-primary" style="flex:2;" onclick="tekliHazirim()">Hazırım! (3-2-1 Başlat)</button>
+      </div>
+    </div>
+
+    <!-- 4. ÇOKLU OYUNCU LOBİ (ODA KUR / KATIL) -->
+    <div id="screen-lobby" class="card hidden">
+      <h3 style="margin-bottom:14px;">⚔️ Çoklu Oyuncu (1v1) Lobisi</h3>
+      <div class="row">
+        <div class="col" style="background:var(--card-2); padding:16px; border-radius:12px;">
+          <h4 style="margin-bottom:10px;">Yeni Oda Kur</h4>
+          <label>Oda Takım Filtresi</label>
+          <select id="mpFilterSelect" style="margin-bottom:12px;">
+            <option value="Hepsi">Kulüp + Milli Takımlar</option>
+            <option value="Kulup">Sadece Kulüpler</option>
+            <option value="Milli">Sadece Milli Takımlar</option>
+          </select>
+          <button class="btn-primary" onclick="odaKur()">Oda Oluştur</button>
+        </div>
+        <div class="col" style="background:var(--card-2); padding:16px; border-radius:12px;">
+          <h4 style="margin-bottom:10px;">Koda Göre Katıl</h4>
+          <label>5 Haneli Oda Kodu</label>
+          <input type="text" id="joinRoomCode" placeholder="Örn: AB12C" style="text-transform:uppercase; margin-bottom:12px;" maxlength="6" />
+          <button class="btn-blue" onclick="odayaKatil()">Odaya Katıl</button>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn-outline btn-sm" onclick="ekranGoster('screen-menu')">← Ana Menüye Dön</button>
+      </div>
+    </div>
+
+    <!-- 5. ÇOKLU OYUNCU BEKLEME & TAKIM SEÇİMİ -->
+    <div id="screen-mp-setup" class="card hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Oda: <span id="mpRoomTitle" style="color:var(--accent);"></span> — Raund <span id="mpRoundNum">1</span>/3</h3>
+        <span class="badge badge-ok" id="mpFilterBadge">Hepsi</span>
+      </div>
+
+      <div id="mpWaitingGuest" class="room-code-box">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:4px;">Arkadaşına bu kodu gönder:</p>
+        <span id="mpDisplayCode">-----</span>
+        <p style="font-size:0.82rem; color:var(--amber); margin-top:6px;">Rakibin odaya katılması bekleniyor...</p>
+      </div>
+
+      <div id="mpPlayersStatus" style="display:flex; justify-content:space-between; background:var(--bg); padding:12px; border-radius:10px; margin:12px 0; font-size:0.9rem;">
+        <div>Kurucu: <strong id="mpHostName">-</strong> (<span id="mpHostReady">Seçiyor...</span>)</div>
+        <div>Misafir: <strong id="mpGuestName">-</strong> (<span id="mpGuestReady">Bekleniyor...</span>)</div>
+      </div>
+
+      <div id="mpTeamSelectArea" class="hidden">
+        <div class="ac-wrap">
+          <label>Gizli Takım Seçimin (Rakip 3-2-1 bitene kadar göremez!)</label>
+          <input type="text" id="mpTeamInput" placeholder="En az 3 harf yaz..." autocomplete="off" />
+          <div id="mpTeamAC" class="ac-list hidden"></div>
+        </div>
+        <div style="margin-top:14px;">
+          <button id="btnMpReady" class="btn-primary" onclick="mpTakimOnayla()">Takımı Kilitle & Hazırım!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. 3 - 2 - 1 GERİ SAYIM EKRANI -->
+    <div id="screen-countdown" class="card hidden">
+      <div class="countdown-box">
+        <p style="color:var(--muted); font-size:1rem; margin-bottom:10px;">Takımlar Açılıyor...</p>
+        <div id="countdownNumber" class="countdown-num">3</div>
+      </div>
+    </div>
+
+    <!-- 7. AKTİF OYUN ARENASI -->
+    <div id="screen-arena" class="card hidden">
+      <div class="arena-header">
+        <span id="arenaRoundInfo">Raund 1/3</span>
+        <span class="timer-pill">⏱ <span id="arenaTimer">30</span> sn</span>
+        <span id="arenaScoreInfo" style="color:var(--accent);">Puan: 0</span>
+      </div>
+
+      <div class="vs-grid">
+        <div class="team-card">
+          <div class="tag" id="team1Owner">Oyuncu 1</div>
+          <div class="name" id="team1Name">-</div>
+        </div>
+        <div class="vs-badge">VS</div>
+        <div class="team-card">
+          <div class="tag" id="team2Owner">Oyuncu 2</div>
+          <div class="name" id="team2Name">-</div>
+        </div>
+      </div>
+
+      <div id="guessInputArea">
+        <div class="ac-wrap">
+          <label>Her İki Takımda da Oynamış/Oynayan Ortak Futbolcu (Tek Hak!)</label>
+          <input type="text" id="playerGuessInput" placeholder="En az 3 harf yaz ve listeden seç..." autocomplete="off" />
+          <div id="playerGuessAC" class="ac-list hidden"></div>
+        </div>
+        <div style="margin-top:12px;">
+          <button id="btnSubmitGuess" class="btn-primary" onclick="tahminiGonder()">Tahmini Gönder</button>
+        </div>
+      </div>
+
+      <div id="roundResultBox" class="hidden" style="margin-top:16px;">
+        <div id="roundBanner" style="padding:14px; border-radius:12px; font-weight:700; text-align:center; font-size:1.05rem;"></div>
+
+        <!-- AA TABİ YA! KARTI -->
+        <div class="reveal-box">
+          <h4>💡 Aa Tabi Ya! Bu İki Takımdaki Tüm Ortak Oyuncular (<span id="commonCount">0</span>):</h4>
+          <div id="commonPlayersList" class="chip-list"></div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <button id="btnNextRound" class="btn-blue" onclick="sonrakiRaundaGec()">Sonraki Raund →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. LİDERLİK TABLOSU (2x2) -->
+    <div class="card">
+      <h3 style="margin-bottom:12px;">🏆 Liderlik Tablosu (Top 10)</h3>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="liderlikSekmeSec('tekliBuAy', this)">Tekli — Bu Ay</button>
+        <button class="tab-btn" onclick="liderlikSekmeSec('tekliTum', this)">Tekli — Tüm Zamanlar</button>
+        <button class="tab-btn" onclick="liderlikSekmeSec('cokluBuAy', this)">Çoklu — Bu Ay</button>
+        <button class="tab-btn" onclick="liderlikSekmeSec('cokluTum', this)">Çoklu — Tüm Zamanlar</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:50px;">#</th>
+            <th>Oyuncu</th>
+            <th>Rol</th>
+            <th>En Yüksek Puan</th>
+            <th id="lbExtraHeader">Zorluk</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <tr><td colspan="5" style="text-align:center; color:var(--muted);">Yükleniyor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    // =========================================================================
+    // YAPILANDIRMA
+    // =========================================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbw19QFFWeqmHuK6voIzxjrtDc8E8-NAiVBjusSLerraNAAJf03r4V49NWGA3nWwU16Njw/exec";
+
+    // GitHub / jsDelivr CDN üzerinden sıkıştırılmış açık futbol veri kaynakları
+    const CDN_SOURCES = [
+      {
+        players: "https://cdn.jsdelivr.net/gh/dcaribou/transfermarkt-datasets@master/data/players.csv",
+        transfers: "https://cdn.jsdelivr.net/gh/dcaribou/transfermarkt-datasets@master/data/transfers.csv"
+      },
+      {
+        players: "https://cdn.jsdelivr.net/gh/salimt/football-datasets@master/datalake/transfermarkt/player_profiles/player_profiles.csv",
+        transfers: "https://cdn.jsdelivr.net/gh/salimt/football-datasets@master/datalake/transfermarkt/transfers/transfers.csv"
+      }
+    ];
+
+    // Global Durum
+    let PLAYERS = [];       // { name, teams: [...], national: "..." }
+    let ALL_CLUBS = [];
+    let ALL_NATIONALS = [];
+    let TEAM_TO_PLAYERS = {}; // teamLower -> Set of player objects
+    let LEADERBOARD_DATA = { tekliBuAy: [], tekliTum: [], cokluBuAy: [], cokluTum: [] };
+    let CURRENT_LB_TAB = "tekliBuAy";
+
+    let USER = { name: localStorage.getItem("f321_user") || "", role: localStorage.getItem("f321_role") || "Misafir" };
+
+    // Oyun Oturumu
+    let GAME = {
+      mode: "solo", // "solo" | "mp"
+      round: 1,
+      score: 0,
+      team1: "",
+      team2: "",
+      timer: 30,
+      timerInterval: null,
+      botTargetTime: 15,
+      guessUsed: false,
+      // Multiplayer alanları
+      roomCode: "",
+      mpRole: "", // "kurucu" | "misafir"
+      mpFilter: "Hepsi",
+      pollInterval: null,
+      lastMpStatus: "",
+      countdownStartedForRound: 0
+    };
+
+    // =========================================================================
+    // BAŞLANGIÇ & VERİ YÜKLEME
+    // =========================================================================
+    window.addEventListener("DOMContentLoaded", async () => {
+      if (USER.name) {
+        document.getElementById("inputUsername").value = USER.name;
+        document.getElementById("inputRole").value = USER.role;
+        document.getElementById("aktifKullaniciLabel").textContent = `${USER.name} (${USER.role})`;
+        ekranGoster("screen-menu");
+      }
+      liderlikYukle();
+      await veritabaniniYukle();
+    });
+
+    async function veritabaniniYukle() {
+      const statusEl = document.getElementById("dbStatus");
+      try {
+        let pText = null, tText = null;
+        for (const src of CDN_SOURCES) {
+          try {
+            const [pRes, tRes] = await Promise.all([fetch(src.players), fetch(src.transfers)]);
+            if (pRes.ok && tRes.ok) {
+              pText = await pRes.text();
+              tText = await tRes.text();
+              break;
+            }
+          } catch (e) {}
+        }
+
+        if (!pText || !tText) throw new Error("CDN erişilemedi");
+
+        const pRows = parseCSV(pText);
+        const tRows = parseCSV(tText);
+
+        const pHead = pRows[0].map(h => h.trim().toLowerCase());
+        const idxId = pHead.indexOf("player_id");
+        const idxName = pHead.indexOf("name") > -1 ? pHead.indexOf("name") : pHead.indexOf("player_name");
+        const idxCit = pHead.indexOf("country_of_citizenship") > -1 ? pHead.indexOf("country_of_citizenship") : pHead.indexOf("citizenship");
+        const idxCurr = pHead.indexOf("current_club_name");
+
+        const tHead = tRows[0].map(h => h.trim().toLowerCase());
+        const tId = tHead.indexOf("player_id");
+        const tFrom = tHead.indexOf("from_club_name");
+        const tTo = tHead.indexOf("to_club_name");
+
+        const clubMap = {};
+        for (let i = 1; i < tRows.length; i++) {
+          const r = tRows[i];
+          const pid = r[tId];
+          if (!pid) continue;
+          if (!clubMap[pid]) clubMap[pid] = new Set();
+          if (r[tFrom]) clubMap[pid].add(r[tFrom].trim());
+          if (r[tTo]) clubMap[pid].add(r[tTo].trim());
+        }
+
+        const clubSet = new Set();
+        const natSet = new Set();
+
+        for (let i = 1; i < pRows.length; i++) {
+          const r = pRows[i];
+          const pid = r[idxId];
+          const name = (r[idxName] || "").trim();
+          if (!pid || !name) continue;
+
+          if (!clubMap[pid]) clubMap[pid] = new Set();
+          const curr = (r[idxCurr] || "").trim();
+          if (curr && curr !== "Retired" && curr !== "Without Club") clubMap[pid].add(curr);
+
+          const teams = Array.from(clubMap[pid]).filter(c => c && !["Retired", "Without Club", "Unknown"].includes(c));
+          const nat = (r[idxCit] || "").split(",")[0].trim();
+
+          if (teams.length === 0 && !nat) continue;
+
+          teams.forEach(t => clubSet.add(t));
+          if (nat) natSet.add(nat);
+
+          const pObj = { name, teams, national: nat };
+          PLAYERS.push(pObj);
+          indeksleOyuncu(pObj);
+        }
+
+        ALL_CLUBS = Array.from(clubSet).sort();
+        ALL_NATIONALS = Array.from(natSet).sort();
+        statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu Hazır</span>`;
+      } catch (err) {
+        // CDN yavaşsa/engelliyse yedek geniş yıldız havuzunu yükle
+        yedekVeriYukle();
+        statusEl.innerHTML = `<span class="badge badge-ok">✅ Yıldız & Süper Lig Havuzu Hazır (${PLAYERS.length} Oyuncu)</span>`;
+      }
+      baglaAutocomplete();
+    }
+
+    function indeksleOyuncu(pObj) {
+      const tum = [...pObj.teams];
+      if (pObj.national) tum.push(pObj.national);
+      tum.forEach(t => {
+        const key = t.toLowerCase();
+        if (!TEAM_TO_PLAYERS[key]) TEAM_TO_PLAYERS[key] = [];
+        if (!TEAM_TO_PLAYERS[key].includes(pObj)) TEAM_TO_PLAYERS[key].push(pObj);
+      });
+    }
+
+    function yedekVeriYukle() {
+      const yedek = [
+        { name: "Didier Drogba", teams: ["Le Mans", "Guingamp", "Olympique Marseille", "Chelsea", "Galatasaray"], national: "Cote d'Ivoire" },
+        { name: "Wesley Sneijder", teams: ["Ajax", "Real Madrid", "Inter Milan", "Galatasaray", "OGC Nice"], national: "Netherlands" },
+        { name: "Arda Turan", teams: ["Galatasaray", "Atletico Madrid", "FC Barcelona", "Istanbul Basaksehir"], national: "Turkey" },
+        { name: "Hakan Calhanoglu", teams: ["Hamburger SV", "Bayer Leverkusen", "AC Milan", "Inter Milan"], national: "Turkey" },
+        { name: "Mesut Ozil", teams: ["Schalke 04", "Werder Bremen", "Real Madrid", "Arsenal", "Fenerbahce", "Istanbul Basaksehir"], national: "Germany" },
+        { name: "Nicolas Anelka", teams: ["Paris Saint-Germain", "Arsenal", "Real Madrid", "Liverpool", "Manchester City", "Fenerbahce", "Chelsea", "Juventus"], national: "France" },
+        { name: "Zlatan Ibrahimovic", teams: ["Ajax", "Juventus", "Inter Milan", "FC Barcelona", "AC Milan", "Paris Saint-Germain", "Manchester United"], national: "Sweden" },
+        { name: "Cristiano Ronaldo", teams: ["Sporting CP", "Manchester United", "Real Madrid", "Juventus", "Al-Nassr"], national: "Portugal" },
+        { name: "Lionel Messi", teams: ["FC Barcelona", "Paris Saint-Germain", "Inter Miami"], national: "Argentina" },
+        { name: "Angel Di Maria", teams: ["Benfica", "Real Madrid", "Manchester United", "Paris Saint-Germain", "Juventus"], national: "Argentina" },
+        { name: "Samuel Eto'o", teams: ["Real Madrid", "Mallorca", "FC Barcelona", "Inter Milan", "Chelsea", "Everton", "Antalyaspor", "Konyaspor"], national: "Cameroon" },
+        { name: "Radamel Falcao", teams: ["FC Porto", "Atletico Madrid", "AS Monaco", "Manchester United", "Chelsea", "Galatasaray"], national: "Colombia" },
+        { name: "Hakim Ziyech", teams: ["Heerenveen", "Twente", "Ajax", "Chelsea", "Galatasaray"], national: "Morocco" },
+        { name: "Juan Mata", teams: ["Valencia", "Chelsea", "Manchester United", "Galatasaray"], national: "Spain" },
+        { name: "Mauro Icardi", teams: ["Sampdoria", "Inter Milan", "Paris Saint-Germain", "Galatasaray"], national: "Argentina" },
+        { name: "Edin Dzeko", teams: ["VfL Wolfsburg", "Manchester City", "AS Roma", "Inter Milan", "Fenerbahce"], national: "Bosnia-Herzegovina" },
+        { name: "Ciro Immobile", teams: ["Juventus", "Borussia Dortmund", "Sevilla", "Lazio", "Besiktas"], national: "Italy" },
+        { name: "Pepe", teams: ["FC Porto", "Real Madrid", "Besiktas"], national: "Portugal" },
+        { name: "Ricardo Quaresma", teams: ["Sporting CP", "FC Barcelona", "FC Porto", "Inter Milan", "Chelsea", "Besiktas", "Kasimpasa"], national: "Portugal" },
+        { name: "Thibaut Courtois", teams: ["Genk", "Atletico Madrid", "Chelsea", "Real Madrid"], national: "Belgium" },
+        { name: "Eden Hazard", teams: ["LOSC Lille", "Chelsea", "Real Madrid"], national: "Belgium" },
+        { name: "Kevin De Bruyne", teams: ["Genk", "Chelsea", "Werder Bremen", "VfL Wolfsburg", "Manchester City"], national: "Belgium" },
+        { name: "Mohamed Salah", teams: ["FC Basel", "Chelsea", "Fiorentina", "AS Roma", "Liverpool"], national: "Egypt" },
+        { name: "Robert Lewandowski", teams: ["Borussia Dortmund", "Bayern Munich", "FC Barcelona"], national: "Poland" },
+        { name: "Ilkay Gundogan", teams: ["Borussia Dortmund", "Manchester City", "FC Barcelona"], national: "Germany" }
+      ];
+      const cSet = new Set(), nSet = new Set();
+      yedek.forEach(p => {
+        PLAYERS.push(p);
+        indeksleOyuncu(p);
+        p.teams.forEach(c => cSet.add(c));
+        if (p.national) nSet.add(p.national);
+      });
+      ALL_CLUBS = Array.from(cSet).sort();
+      ALL_NATIONALS = Array.from(nSet).sort();
+    }
+
+    function parseCSV(str) {
+      const arr = [];
+      let quote = false, row = [], col = "";
+      for (let i = 0; i < str.length; i++) {
+        const c = str[i], nc = str[i + 1];
+        if (c === '"' && quote && nc === '"') { col += '"'; i++; continue; }
+        if (c === '"') { quote = !quote; continue; }
+        if (c === ',' && !quote) { row.push(col); col = ""; continue; }
+        if ((c === '\n' || c === '\r') && !quote) {
+          if (c === '\r' && nc === '\n') i++;
+          row.push(col); arr.push(row); row = []; col = ""; continue;
+        }
+        col += c;
+      }
+      if (col || row.length) { row.push(col); arr.push(row); }
+      return arr;
+    }
+
+    // =========================================================================
+    // KULLANICI & EKRAN YÖNETİMİ
+    // =========================================================================
+    function ekranGoster(id) {
+      ["screen-login", "screen-menu", "screen-solo-setup", "screen-lobby", "screen-mp-setup", "screen-countdown", "screen-arena"].forEach(s => {
+        document.getElementById(s).classList.add("hidden");
+      });
+      document.getElementById(id).classList.remove("hidden");
+    }
+
+    function kullaniciKaydet() {
+      const ad = document.getElementById("inputUsername").value.trim();
+      const rol = document.getElementById("inputRole").value;
+      if (!ad) return toast("Lütfen bir kullanıcı adı gir.");
+      USER = { name: ad, role: rol };
+      localStorage.setItem("f321_user", ad);
+      localStorage.setItem("f321_role", rol);
+      document.getElementById("aktifKullaniciLabel").textContent = `${ad} (${rol})`;
+      ekranGoster("screen-menu");
+    }
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.add("hidden"), 3200);
+    }
+
+    // =========================================================================
+    // 3 HARFLİ AUTOCOMPLETE (TAKIM & FUTBOLCU)
+    // =========================================================================
+    function baglaAutocomplete() {
+      setupAC("soloTeamInput", "soloTeamAC", () => getFilteredTeams(document.getElementById("soloPoolFilter").value));
+      setupAC("mpTeamInput", "mpTeamAC", () => getFilteredTeams(GAME.mpFilter));
+      setupAC("playerGuessInput", "playerGuessAC", () => PLAYERS.map(p => p.name));
+    }
+
+    function getFilteredTeams(filter) {
+      if (filter === "Kulup") return ALL_CLUBS;
+      if (filter === "Milli") return ALL_NATIONALS;
+      return [...ALL_CLUBS, ...ALL_NATIONALS];
+    }
+
+    function setupAC(inputId, listId, getItemsFn) {
+      const inp = document.getElementById(inputId);
+      const list = document.getElementById(listId);
+
+      inp.addEventListener("input", () => {
+        const q = normalizeTr(inp.value.trim());
+        if (q.length < 3) {
+          list.classList.add("hidden");
+          return;
+        }
+        const items = getItemsFn();
+        const matches = items.filter(item => normalizeTr(item).includes(q)).slice(0, 15);
+        if (matches.length === 0) {
+          list.classList.add("hidden");
+          return;
+        }
+        list.innerHTML = matches.map(m => `<div class="ac-item" data-val="${m}">${m}</div>`).join("");
+        list.classList.remove("hidden");
+        list.querySelectorAll(".ac-item").forEach(el => {
+          el.addEventListener("click", () => {
+            inp.value = el.dataset.val;
+            list.classList.add("hidden");
+          });
+        });
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!inp.contains(e.target) && !list.contains(e.target)) list.classList.add("hidden");
+      });
+    }
+
+    function normalizeTr(str) {
+      return str.toLowerCase()
+        .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
+        .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c");
+    }
+
+    function bulOrtakOyuncular(t1, t2) {
+      const list1 = TEAM_TO_PLAYERS[t1.toLowerCase()] || [];
+      const t2Low = t2.toLowerCase();
+      return list1.filter(p => p.teams.some(c => c.toLowerCase() === t2Low) || (p.national && p.national.toLowerCase() === t2Low)).map(p => p.name);
+    }
+
+    // =========================================================================
+    // TEK OYUNCULU (BOTA KARŞI) AKIŞI
+    // =========================================================================
+    function tekliModHazirla() {
+      GAME.mode = "solo";
+      GAME.round = 1;
+      GAME.score = 0;
+      document.getElementById("soloRoundNum").textContent = "1";
+      document.getElementById("soloTotalScore").textContent = "0";
+      document.getElementById("soloTeamInput").value = "";
+      ekranGoster("screen-solo-setup");
+    }
+
+    function tekliHazirim() {
+      const secilen = document.getElementById("soloTeamInput").value.trim();
+      const havuz = getFilteredTeams(document.getElementById("soloPoolFilter").value);
+      const gercekTakim = havuz.find(t => t.toLowerCase() === secilen.toLowerCase());
+
+      if (!gercekTakim) return toast("Lütfen açılan listeden geçerli bir takım seç.");
+
+      const zorluk = document.getElementById("soloDifficulty").value;
+      const adaylar = [];
+
+      for (const aday of havuz) {
+        if (aday.toLowerCase() === gercekTakim.toLowerCase()) continue;
+        const ortak = bulOrtakOyuncular(gercekTakim, aday);
+        if (ortak.length === 0) continue;
+
+        if (zorluk === "Kolay" && ortak.length >= 4) adaylar.push(aday);
+        else if (zorluk === "Orta" && ortak.length >= 2 && ortak.length <= 6) adaylar.push(aday);
+        else if (zorluk === "Zor" && ortak.length >= 1 && ortak.length <= 2) adaylar.push(aday);
+      }
+
+      // Kriter çok dar kaldıysa kesişimi olan herhangi bir takıma düş
+      if (adaylar.length === 0) {
+        for (const aday of havuz) {
+          if (aday.toLowerCase() !== gercekTakim.toLowerCase() && bulOrtakOyuncular(gercekTakim, aday).length > 0) {
+            adaylar.push(aday);
+          }
+        }
+      }
+
+      if (adaylar.length === 0) return toast("Bu takımın veritabanında ortak oyuncusu bulunamadı, başka takım seç.");
+
+      GAME.team1 = gercekTakim;
+      GAME.team2 = adaylar[Math.floor(Math.random() * adaylar.length)];
+      GAME.botTargetTime = zorluk === "Kolay" ? 20 : (zorluk === "Orta" ? 14 : 8);
+
+      baslatGeriSayim(() => arenaBaslat(USER.name, `Bot (${zorluk})`));
+    }
+
+    // =========================================================================
+    // ÇOKLU OYUNCU (1v1 ODA SİSTEMİ) AKIŞI
+    // =========================================================================
+    async function odaKur() {
+      const filtre = document.getElementById("mpFilterSelect").value;
+      toast("Oda oluşturuluyor...");
+      const res = await postAPI({ action: "odaKur", kullanici: USER.name, filtre });
+      if (res.status !== "ok") return toast(res.message || "Oda kurulamadı.");
+
+      GAME.mode = "mp";
+      GAME.roomCode = res.odaKodu;
+      GAME.mpRole = "kurucu";
+      GAME.mpFilter = filtre;
+      GAME.round = 1;
+      GAME.score = 0;
+
+      document.getElementById("mpRoomTitle").textContent = res.odaKodu;
+      document.getElementById("mpDisplayCode").textContent = res.odaKodu;
+      document.getElementById("mpFilterBadge").textContent = filtre;
+      document.getElementById("mpWaitingGuest").classList.remove("hidden");
+      document.getElementById("mpTeamSelectArea").classList.add("hidden");
+      ekranGoster("screen-mp-setup");
+      baslatOdaPolling();
+    }
+
+    async function odayaKatil() {
+      const kod = document.getElementById("joinRoomCode").value.trim().toUpperCase();
+      if (!kod) return toast("Oda kodunu gir.");
+      toast("Odaya bağlanılıyor...");
+      const res = await postAPI({ action: "odayaKatil", kullanici: USER.name, odaKodu: kod });
+      if (res.status !== "ok") return toast(res.message || "Katılım başarısız.");
+
+      GAME.mode = "mp";
+      GAME.roomCode = kod;
+      GAME.mpRole = "misafir";
+      GAME.mpFilter = res.filtre || "Hepsi";
+      GAME.round = 1;
+      GAME.score = 0;
+
+      document.getElementById("mpRoomTitle").textContent = kod;
+      document.getElementById("mpFilterBadge").textContent = GAME.mpFilter;
+      document.getElementById("mpWaitingGuest").classList.add("hidden");
+      document.getElementById("mpTeamSelectArea").classList.remove("hidden");
+      ekranGoster("screen-mp-setup");
+      baslatOdaPolling();
+    }
+
+    async function mpTakimOnayla() {
+      const secilen = document.getElementById("mpTeamInput").value.trim();
+      const havuz = getFilteredTeams(GAME.mpFilter);
+      const gercekTakim = havuz.find(t => t.toLowerCase() === secilen.toLowerCase());
+      if (!gercekTakim) return toast("Listeden geçerli bir takım seç.");
+
+      document.getElementById("btnMpReady").disabled = true;
+      const res = await postAPI({
+        action: "takimSecVeHazirOl",
+        odaKodu: GAME.roomCode,
+        rol: GAME.mpRole,
+        takim: gercekTakim
+      });
+      if (res.status === "ayni_takim") {
+        toast(res.message);
+        document.getElementById("btnMpReady").disabled = false;
+      } else {
+        toast("Seçimin kilitlendi! Rakip bekleniyor...");
+      }
+    }
+
+    function baslatOdaPolling() {
+      clearInterval(GAME.pollInterval);
+      GAME.pollInterval = setInterval(async () => {
+        const res = await fetch(`${API_URL}?action=odaDurumu&odaKodu=${GAME.roomCode}&kullanici=${encodeURIComponent(USER.name)}`).then(r => r.json());
+        if (res.status !== "ok") return;
+
+        GAME.round = Number(res.round);
+        document.getElementById("mpRoundNum").textContent = GAME.round;
+        document.getElementById("mpHostName").textContent = res.kurucu || "-";
+        document.getElementById("mpGuestName").textContent = res.misafir || "Bekleniyor...";
+        document.getElementById("mpHostReady").textContent = res.kurucuHazir === "EVET" ? "✅ Hazır" : "Seçiyor...";
+        document.getElementById("mpGuestReady").textContent = res.misafir ? (res.misafirHazir === "EVET" ? "✅ Hazır" : "Seçiyor...") : "Bekleniyor...";
+
+        if (res.misafir && res.durum === "takim_secimi") {
+          document.getElementById("mpWaitingGuest").classList.add("hidden");
+          document.getElementById("mpTeamSelectArea").classList.remove("hidden");
+          if (GAME.lastMpStatus !== "takim_secimi") {
+            document.getElementById("mpTeamInput").value = "";
+            document.getElementById("btnMpReady").disabled = false;
+            ekranGoster("screen-mp-setup");
+          }
+        }
+
+        if (res.durum === "ayni_takim_uyarisi" && GAME.lastMpStatus !== "ayni_takim_uyarisi") {
+          toast("İkiniz de aynı takımı seçtiniz! Farklı bir takım seçin.");
+          document.getElementById("btnMpReady").disabled = false;
+        }
+
+        if (res.durum === "oynaniyor" && GAME.countdownStartedForRound !== GAME.round) {
+          GAME.countdownStartedForRound = GAME.round;
+          GAME.team1 = res.kurucuTakim;
+          GAME.team2 = res.misafirTakim;
+          baslatGeriSayim(() => arenaBaslat(res.kurucu, res.misafir));
+        }
+
+        if ((res.durum === "round_bitti" || res.durum === "round_gecersiz") && GAME.lastMpStatus === "oynaniyor") {
+          clearInterval(GAME.timerInterval);
+          GAME.score = GAME.mpRole === "kurucu" ? Number(res.kurucuPuan) : Number(res.misafirPuan);
+          const mesaj = res.durum === "round_bitti"
+            ? `🏆 Raund Tamamlandı! (${res.roundKazananlar.split(",").pop().trim()})`
+            : "❌ İki oyuncu da yanlış tahmin yaptı! Raund geçersiz.";
+          raundSonuGoster(mesaj, res.durum === "round_bitti" ? "ok" : "err", "");
+        }
+
+        if (res.durum === "oyun_bitti" && GAME.lastMpStatus !== "oyun_bitti") {
+          clearInterval(GAME.pollInterval);
+          const benPuan = GAME.mpRole === "kurucu" ? Number(res.kurucuPuan) : Number(res.misafirPuan);
+          const rakipPuan = GAME.mpRole === "kurucu" ? Number(res.misafirPuan) : Number(res.kurucuPuan);
+          const kazandiMi = benPuan > rakipPuan;
+          await postAPI({ action: "skorKaydet", mod: "coklu", kullanici: USER.name, rol: USER.role, skor: benPuan, kazandiMi });
+          toast(kazandiMi ? `🎉 Tebrikler! Maçı ${benPuan} - ${rakipPuan} kazandın!` : `Maç bitti! Skor: ${benPuan} - ${rakipPuan}`);
+          liderlikYukle();
+          ekranGoster("screen-menu");
+        }
+
+        GAME.lastMpStatus = res.durum;
+      }, 1500);
+    }
+
+    // =========================================================================
+    // 3 - 2 - 1 GERİ SAYIM & ARENA
+    // =========================================================================
+    function baslatGeriSayim(onComplete) {
+      ekranGoster("screen-countdown");
+      let count = 3;
+      const numEl = document.getElementById("countdownNumber");
+      numEl.textContent = count;
+
+      const iv = setInterval(() => {
+        count--;
+        if (count > 0) {
+          numEl.textContent = count;
+        } else {
+          clearInterval(iv);
+          onComplete();
+        }
+      }, 950);
+    }
+
+    function arenaBaslat(owner1, owner2) {
+      GAME.timer = 30;
+      GAME.guessUsed = false;
+      document.getElementById("arenaRoundInfo").textContent = `Raund ${GAME.round}/3`;
+      document.getElementById("arenaScoreInfo").textContent = `Puan: ${GAME.score}`;
+      document.getElementById("arenaTimer").textContent = "30";
+      document.getElementById("team1Owner").textContent = owner1;
+      document.getElementById("team1Name").textContent = GAME.team1;
+      document.getElementById("team2Owner").textContent = owner2;
+      document.getElementById("team2Name").textContent = GAME.team2;
+
+      document.getElementById("playerGuessInput").value = "";
+      document.getElementById("playerGuessInput").disabled = false;
+      document.getElementById("btnSubmitGuess").disabled = false;
+      document.getElementById("guessInputArea").classList.remove("hidden");
+      document.getElementById("roundResultBox").classList.add("hidden");
+
+      ekranGoster("screen-arena");
+
+      clearInterval(GAME.timerInterval);
+      GAME.timerInterval = setInterval(() => {
+        GAME.timer--;
+        document.getElementById("arenaTimer").textContent = GAME.timer;
+
+        // Tekli modda botun cevap süresi geldiyse bot kazanır
+        if (GAME.mode === "solo" && (30 - GAME.timer) >= GAME.botTargetTime) {
+          clearInterval(GAME.timerInterval);
+          raundSonuGoster("🤖 Bot senden önce ortak oyuncuyu buldu! Bu raund puan yok.", "err", "");
+          return;
+        }
+
+        if (GAME.timer <= 0) {
+          clearInterval(GAME.timerInterval);
+          raundSonuGoster("⏰ Süre doldu! Kimse bilemedi.", "err", "");
+        }
+      }, 1000);
+    }
+
+    async function tahminiGonder() {
+      if (GAME.guessUsed) return;
+      const tahmin = document.getElementById("playerGuessInput").value.trim();
+      if (!tahmin) return toast("Bir futbolcu seç.");
+
+      GAME.guessUsed = true;
+      document.getElementById("playerGuessInput").disabled = true;
+      document.getElementById("btnSubmitGuess").disabled = true;
+
+      const ortaklar = bulOrtakOyuncular(GAME.team1, GAME.team2);
+      const dogruMu = ortaklar.some(o => o.toLowerCase() === tahmin.toLowerCase());
+
+      if (GAME.mode === "solo") {
+        clearInterval(GAME.timerInterval);
+        if (dogruMu) {
+          const zorlukCarpani = document.getElementById("soloDifficulty").value === "Zor" ? 15 : (document.getElementById("soloDifficulty").value === "Orta" ? 10 : 7);
+          const puan = 100 + (GAME.timer * zorlukCarpani);
+          GAME.score += puan;
+          document.getElementById("arenaScoreInfo").textContent = `Puan: ${GAME.score}`;
+          raundSonuGoster(`✅ Harika! "${tahmin}" doğru cevap! (+${puan} Puan)`, "ok", tahmin);
+        } else {
+          raundSonuGoster(`❌ "${tahmin}" bu iki takımda birlikte oynamadı. Tek hakkın bitti!`, "err", "");
+        }
+      } else {
+        // Çoklu oyuncu sunucuya bildir
+        const res = await postAPI({
+          action: "tahminSonucuBildir",
+          odaKodu: GAME.roomCode,
+          rol: GAME.mpRole,
+          tahmin: tahmin,
+          dogruMu: dogruMu,
+          kalanSaniye: GAME.timer
+        });
+        if (res.sonuc === "yanlis_bekle") {
+          toast("❌ Yanlış tahmin! Tek hakkını kullandın, rakibin süresi bekleniyor...");
+        }
+      }
+    }
+
+    function raundSonuGoster(mesaj, tip, dogruTahmin) {
+      const banner = document.getElementById("roundBanner");
+      banner.textContent = mesaj;
+      banner.style.background = tip === "ok" ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)";
+      banner.style.color = tip === "ok" ? "#34d399" : "#f87171";
+
+      // Aa Tabi Ya! Ortak Oyuncuları Listele
+      const tumOrtaklar = bulOrtakOyuncular(GAME.team1, GAME.team2);
+      document.getElementById("commonCount").textContent = tumOrtaklar.length;
+      const listEl = document.getElementById("commonPlayersList");
+      if (tumOrtaklar.length === 0) {
+        listEl.innerHTML = `<span class="chip">Bu iki takım arasında ortak oyuncu bulunamadı!</span>`;
+      } else {
+        listEl.innerHTML = tumOrtaklar.map(name => {
+          const hl = dogruTahmin && name.toLowerCase() === dogruTahmin.toLowerCase() ? "highlight" : "";
+          return `<span class="chip ${hl}">${name}</span>`;
+        }).join("");
+      }
+
+      document.getElementById("btnNextRound").textContent = GAME.round >= 3 ? "Oyunu Bitir & Skoru Kaydet" : "Sonraki Raund →";
+      document.getElementById("roundResultBox").classList.remove("hidden");
+    }
+
+    async function sonrakiRaundaGec() {
+      if (GAME.mode === "solo") {
+        if (GAME.round >= 3) {
+          const zorluk = document.getElementById("soloDifficulty").value;
+          toast("Skor kaydediliyor...");
+          await postAPI({ action: "skorKaydet", mod: "tekli", kullanici: USER.name, rol: USER.role, skor: GAME.score, zorluk });
+          toast(`🏁 Oyun Bitti! Toplam Puanın: ${GAME.score}`);
+          liderlikYukle();
+          ekranGoster("screen-menu");
+          return;
+        }
+        GAME.round++;
+        document.getElementById("soloRoundNum").textContent = GAME.round;
+        document.getElementById("soloTotalScore").textContent = GAME.score;
+        document.getElementById("soloTeamInput").value = "";
+        ekranGoster("screen-solo-setup");
+      } else {
+        await postAPI({ action: "sonrakiRound", odaKodu: GAME.roomCode });
+      }
+    }
+
+    // =========================================================================
+    // LİDERLİK TABLOSU & API YARDIMCISI
+    // =========================================================================
+    async function liderlikYukle() {
+      try {
+        const res = await fetch(`${API_URL}?action=liderlik`).then(r => r.json());
+        if (res.status === "ok" && res.liderlik) {
+          LEADERBOARD_DATA = res.liderlik;
+          liderlikRender();
+        }
+      } catch (e) {}
+    }
+
+    function liderlikSekmeSec(key, btn) {
+      CURRENT_LB_TAB = key;
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("lbExtraHeader").textContent = key.startsWith("coklu") ? "Galibiyet" : "Zorluk";
+      liderlikRender();
+    }
+
+    function liderlikRender() {
+      const tbody = document.getElementById("leaderboardBody");
+      const list = LEADERBOARD_DATA[CURRENT_LB_TAB] || [];
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--muted);">Henüz kayıtlı skor yok. İlk sen ol!</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(row => `
+        <tr>
+          <td><strong>${row.sira}</strong></td>
+          <td>${row.kullanici}</td>
+          <td><span class="badge badge-ok">${row.rol}</span></td>
+          <td><strong>${row.skor}</strong></td>
+          <td>${row.ekstra ?? "-"}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function postAPI(payload) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    }
+  </script>
+</body>
+</html>
