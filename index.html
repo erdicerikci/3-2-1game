@@ -876,20 +876,11 @@
       document.getElementById('topUsername').textContent = STATE.user.username;
     }
 
-    // Ham kulüp adını temizler (alt yaş takımlarını silmeden korur)
-    function cleanRawClubName(club) {
+    // Alt yaş gruplarını (U19, U21, B Takımı, II, Youth vb.) filtreleyip as takımı döndürür
+    function normalizeClubName(club) {
       if (!club) return '';
-      return String(club)
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    // Soru/kriter başlığı için alt yaş/rezerv eklerini atıp ana kulüp adını döndürür (örn: "Beşiktaş U19" -> "Beşiktaş")
-    function toMainClubLabel(club) {
-      if (!club) return '';
-      return String(club)
-        .replace(/\b(U13|U14|U15|U16|U17|U18|U19|U20|U21|U23|B Takımı|Altyapı|Reserve|Reserves|Youth)\b/gi, '')
-        .replace(/\s+(II|B)$/gi, '')
+      return club
+        .replace(/ (U15|U16|U17|U18|U19|U20|U21|U23|B Takımı|II|B|Youth|Altyapı|Reserve|Reserves) /gi, '')
         .replace(/\s+/g, ' ')
         .trim();
     }
@@ -904,39 +895,6 @@
       return num;
     }
 
-    function extractClubsList(item) {
-      if (!item || typeof item !== 'object') return [];
-      const candidates = [
-        item.clubs, item.Kulupler, item.Kulüpler, item.Kulup, item.Kulüp,
-        item.Takım, item.Takim, item.Takımlar, item.Takimlar, item.Team, item.Teams
-      ];
-      const list = [];
-      candidates.forEach(val => {
-        if (!val) return;
-        if (Array.isArray(val)) {
-          val.forEach(v => {
-            if (typeof v === 'string') {
-              v.split(/[,;|/]+/).forEach(part => list.push(part));
-            } else if (v && typeof v === 'object') {
-              const cName = v.name || v.club || v.team || v.ad || v.Takım || v.Kulüp || '';
-              if (cName) list.push(cName);
-            }
-          });
-        } else if (typeof val === 'string') {
-          val.split(/[,;|/]+/).forEach(part => list.push(part));
-        }
-      });
-      return [...new Set(list.map(cleanRawClubName).filter(Boolean))];
-    }
-
-    function extractPlayerName(item) {
-      if (!item || typeof item !== 'object') return '';
-      return String(
-        item.name || item.AdSoyad || item['İsim Soyisim'] || item.IsimSoyisim ||
-        item.isim || item.ad || item.player || item.oyuncu || item.Oyuncu || ''
-      ).trim();
-    }
-
     async function initDatabase() {
       const statusText = document.getElementById('dbStatusText');
       const countBadge = document.getElementById('dbCountBadge');
@@ -949,29 +907,23 @@
         const res = await fetch('guncel.json', { cache: 'no-store' });
         if (res.ok) {
           const json = await res.json();
-          const list = Array.isArray(json)
-            ? json
-            : (json.players || json.data || json.futbolcular || json.items || []);
+          const list = Array.isArray(json) ? json : (json.players || json.data || []);
           list.forEach((p, idx) => {
-            const name = extractPlayerName(p);
-            if (!name) return;
-            const cleanClubs = extractClubsList(p);
-            const val = parseMarketValue(
-              p.value || p.MaxPiyasaDegeri || p['Piyasa Değeri'] || p.PiyasaDegeri || p.marketValue
-            );
-            const leagueStr = String(p.league || p.Lig || p.League || 'Diğer').trim() || 'Diğer';
-            const nationStr = String(p.nation || p.MilliTakim || p['Milli Takım'] || p.Uyruk || 'Bilinmiyor').trim() || 'Bilinmiyor';
-            const posStr = String(p.pos || p.Pozisyon || p.Mevki || p.Position || 'Orta Saha').trim() || 'Orta Saha';
-
+            const rawClubs = Array.isArray(p.clubs) ? p.clubs : String(p.Kulupler || p.Takım || '').split(',');
+            const cleanClubs = [...new Set(rawClubs.map(normalizeClubName).filter(Boolean))];
+            if (p.Takım && !cleanClubs.includes(normalizeClubName(p.Takım))) {
+              cleanClubs.push(normalizeClubName(p.Takım));
+            }
+            const val = parseMarketValue(p.value || p.MaxPiyasaDegeri || p['Piyasa Değeri']);
             loadedPlayers.push({
               id: p.id || p.PlayerID || idx + 1,
-              name,
-              clubs: cleanClubs.length > 0 ? cleanClubs : [leagueStr],
-              nation: nationStr,
+              name: p.name || p.AdSoyad || p['İsim Soyisim'],
+              clubs: cleanClubs,
+              nation: p.nation || p.MilliTakim || 'Bilinmiyor',
               value: val,
-              league: leagueStr,
-              pos: posStr,
-              star: val >= 15000000 || p.Kategori === 'Yildiz' || p.star === true
+              league: p.league || p.Lig || 'Diğer',
+              pos: p.pos || p.Pozisyon || 'Orta Saha',
+              star: val >= 15000000 || p.Kategori === 'Yildiz'
             });
           });
         }
@@ -989,33 +941,30 @@
               .getPlayersData();
           });
           if (Array.isArray(sheetPlayers) && sheetPlayers.length > 0) {
-            const mapByName = new Map(loadedPlayers.map(p => [normalizeText(p.name), p]));
+            const mapByName = new Map(loadedPlayers.map(p => [p.name.toLowerCase(), p]));
             sheetPlayers.forEach((sp, i) => {
-              const name = extractPlayerName(sp);
+              const name = sp.AdSoyad || sp['İsim Soyisim'] || sp.name;
               if (!name) return;
-              const key = normalizeText(name);
-              const extraClubs = extractClubsList(sp);
-              const val = parseMarketValue(
-                sp.MaxPiyasaDegeri || sp['Piyasa Değeri'] || sp.PiyasaDegeri || sp.value
-              );
-              const leagueStr = String(sp.Lig || sp.league || '').trim();
-              const nationStr = String(sp.MilliTakim || sp['Milli Takım'] || sp.Uyruk || sp.nation || 'Bilinmiyor').trim();
-              const posStr = String(sp.Pozisyon || sp.Mevki || sp.pos || 'Orta Saha').trim();
+              const key = name.toLowerCase();
+              const team = normalizeClubName(sp.Takım || '');
+              const extraClubs = String(sp.Kulupler || '').split(',').map(normalizeClubName).filter(Boolean);
+              if (team && !extraClubs.includes(team)) extraClubs.push(team);
+              const val = parseMarketValue(sp.MaxPiyasaDegeri || sp['Piyasa Değeri']);
 
               if (mapByName.has(key)) {
                 const existing = mapByName.get(key);
                 extraClubs.forEach(c => { if (!existing.clubs.includes(c)) existing.clubs.push(c); });
-                if (leagueStr) existing.league = leagueStr;
+                if (sp.Lig) existing.league = sp.Lig;
                 if (val > existing.value) existing.value = val;
               } else {
                 mapByName.set(key, {
                   id: sp.PlayerID || loadedPlayers.length + i + 1,
                   name,
-                  clubs: extraClubs.length > 0 ? extraClubs : [leagueStr || 'Trendyol Süper Lig'],
-                  nation: nationStr || 'Bilinmiyor',
+                  clubs: extraClubs,
+                  nation: sp.MilliTakim || 'Bilinmiyor',
                   value: val,
-                  league: leagueStr || 'Trendyol Süper Lig',
-                  pos: posStr || 'Orta Saha',
+                  league: sp.Lig || 'Trendyol Süper Lig',
+                  pos: sp.Pozisyon || 'Orta Saha',
                   star: val >= 15000000 || sp.Kategori === 'Yildiz'
                 });
               }
@@ -1032,9 +981,9 @@
         loadedPlayers = [...FALLBACK_PLAYERS];
       }
 
-      STATE.players = loadedPlayers.filter(p => p.name && Array.isArray(p.clubs) && p.clubs.length > 0);
+      STATE.players = loadedPlayers.filter(p => p.name && p.clubs.length > 0);
       spinner.style.display = 'none';
-      statusText.textContent = 'Veritabanı hazır (Alt yaş kulüpleri havuzda, ana kulüpler sorulur)';
+      statusText.textContent = 'Veritabanı hazır (As takımlar filtrelendi)';
       countBadge.textContent = `${STATE.players.length} Oyuncu`;
     }
 
@@ -1175,18 +1124,12 @@
       document.getElementById('slotsContainer').style.display = 'flex';
       document.getElementById('whoAmIContainer').style.display = 'none';
 
-      // Oyuncuların tüm kulüplerini (U19/alt yaş dahil) ana kulüp adı altında topla; soruda sadece ana kulübü sor
+      // Havuzdaki kulüplerden ve ülkelerden geçerli 5 kriter üret
       const clubMap = new Map();
       STATE.filteredPool.forEach(p => {
-        const matchedMainClubsInPlayer = new Set();
-        (p.clubs || []).forEach(c => {
-          const mainLabel = toMainClubLabel(c);
-          if (!mainLabel) return;
-          if (!clubMap.has(mainLabel)) clubMap.set(mainLabel, []);
-          if (!matchedMainClubsInPlayer.has(mainLabel)) {
-            matchedMainClubsInPlayer.add(mainLabel);
-            clubMap.get(mainLabel).push(p);
-          }
+        p.clubs.forEach(c => {
+          if (!clubMap.has(c)) clubMap.set(c, []);
+          clubMap.get(c).push(p);
         });
       });
 
@@ -1378,17 +1321,11 @@
     }
 
     function isClubMatch(playerClubs, targetLabel) {
-      const normTarget = normalizeText(toMainClubLabel(targetLabel));
+      const normTarget = normalizeText(normalizeClubName(targetLabel));
       if (!normTarget) return false;
       return (playerClubs || []).some(c => {
-        const normMainClub = normalizeText(toMainClubLabel(c));
-        const normRawClub = normalizeText(cleanRawClubName(c));
-        return (
-          normMainClub === normTarget ||
-          normMainClub.includes(normTarget) ||
-          normTarget.includes(normMainClub) ||
-          normRawClub.includes(normTarget)
-        );
+        const normClub = normalizeText(normalizeClubName(c));
+        return normClub === normTarget || normClub.includes(normTarget) || normTarget.includes(normClub);
       });
     }
 
