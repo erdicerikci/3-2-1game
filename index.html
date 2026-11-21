@@ -671,10 +671,14 @@
     function isTop6FirstTeam(clubName) {
       if (!clubName) return false;
       if (RESERVE_REGEX.test(clubName)) return false;
-      const norm = normalizeTr(clubName);
-      return TOP_6_LEAGUE_CLUBS.some(k => norm === k || norm.includes(k));
-    }
+      const norm = normalizeTr(clubName)
+        .replace(/\b(fc|cf|ac|sc|sv|sk|jk|fk|as|vfb|vfl|ogc|rc|losc|ud|cd|rcd|sd|us|ss|ssc|acf|uc|tsg|fsv|rb|1\.)\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
+      return TOP_6_LEAGUE_CLUBS.some(k => norm === k || norm.startsWith(k + " ") || norm.endsWith(" " + k));
+    }
+    
     function getClubCategory(clubName) {
       const norm = normalizeTr(clubName);
       if (SUPER_LIG_TEAMS.some(k => norm === k || norm.includes(k))) return "SuperLig";
