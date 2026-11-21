@@ -252,8 +252,9 @@
           <input type="text" id="g5PlayerInput" placeholder="Futbolcu adı yaz..." autocomplete="off" />
           <div id="g5PlayerAC" class="ac-list hidden"></div>
         </div>
-        <div style="margin-top:12px;">
-          <button id="g5SubmitBtn" class="btn-primary" onclick="g54321TahminGonder()">Tahmini Onayla</button>
+        <div class="row" style="margin-top:12px;">
+          <button id="g5SubmitBtn" class="btn-primary" style="flex:2;" onclick="g54321TahminGonder()">Tahmini Onayla</button>
+          <button id="g5GiveUpBtn" class="btn-danger" style="flex:1;" onclick="g54321PesEt()">🏳️ Pes Et</button>
         </div>
       </div>
 
@@ -794,7 +795,7 @@
         ALL_NATIONALS = Array.from(natSet).sort();
         CLUB_NAT_PAIRS = Object.values(pairMap).filter(p => p.players.length >= 1);
 
-        statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.length.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
+        statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
         baglaAutocomplete();
       } catch (err) {
         console.error(err);
@@ -980,6 +981,7 @@
       document.getElementById("g5PlayerInput").value = "";
       document.getElementById("g5PlayerInput").disabled = false;
       document.getElementById("g5SubmitBtn").disabled = false;
+      document.getElementById("g5GiveUpBtn").disabled = false;
       document.getElementById("g5InputArea").classList.remove("hidden");
       document.getElementById("g5RevealArea").classList.add("hidden");
 
@@ -1057,6 +1059,13 @@
           toast(`❌ Yanlış tahmin! 1 can gitti (Kalan can: ${G5.lives})`);
         }
       }
+    }
+
+    function g54321PesEt() {
+      if (G5.gameOver) return;
+      clearInterval(G5.timerInterval);
+      document.getElementById("g5PlayerAC").classList.add("hidden");
+      g54321OyunBitti("🏳️ Pes ettin! İşte bu kriteri sağlayan tüm futbolcular:");
     }
 
     function g54321AdimTamamlandi(istenenSayi, sureBonusu) {
