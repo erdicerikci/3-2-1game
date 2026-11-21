@@ -1,0 +1,825 @@
+[
+  {
+    "id": 101,
+    "name": "Arda Turan",
+    "clubs": [
+      "Galatasaray",
+      "Atletico Madrid",
+      "Barcelona",
+      "Istanbul Basaksehir"
+    ],
+    "nation": "Turkiye",
+    "value": 35000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Orta Saha",
+    "star": true
+  },
+  {
+    "id": 102,
+    "name": "Hakan Calhanoglu",
+    "clubs": [
+      "Karlsruher SC",
+      "Hamburger SV",
+      "Bayer Leverkusen",
+      "AC Milan",
+      "Inter"
+    ],
+    "nation": "Turkiye",
+    "value": 45000000,
+    "league": "Serie A",
+    "pos": "Orta Saha",
+    "star": true
+  },
+  {
+    "id": 103,
+    "name": "Mesut Ozil",
+    "clubs": [
+      "Schalke 04",
+      "Werder Bremen",
+      "Real Madrid",
+      "Arsenal",
+      "Fenerbahce",
+      "Istanbul Basaksehir"
+    ],
+    "nation": "Almanya",
+    "value": 50000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Orta Saha",
+    "star": true
+  },
+  {
+    "id": 1,
+    "name": "Uğurcan Çakır",
+    "clubs": [
+      "Galatasaray",
+      "Trabzonspor"
+    ],
+    "nation": "Türkiye",
+    "value": 13000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Kaleci",
+    "star": true
+  },
+  {
+    "id": 2,
+    "name": "Jankat Yılmaz",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 2000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Kaleci",
+    "star": false
+  },
+  {
+    "id": 3,
+    "name": "Günay Güvenç",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 200000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Kaleci",
+    "star": false
+  },
+  {
+    "id": 4,
+    "name": "El Chadaille Bitshiabu",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Fransa",
+    "value": 18000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": true
+  },
+  {
+    "id": 5,
+    "name": "Davinson Sánchez",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Kolombiya",
+    "value": 16000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": true
+  },
+  {
+    "id": 6,
+    "name": "Abdülkerim Bardakcı",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 5500000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 7,
+    "name": "Kaan Ayhan",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 1000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 8,
+    "name": "Arda Ünyay",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 1000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 9,
+    "name": "Ismail Jakobs",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Senegal",
+    "value": 8000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Bek",
+    "star": false
+  },
+  {
+    "id": 10,
+    "name": "Eren Elmalı",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 5000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Bek",
+    "star": false
+  },
+  {
+    "id": 11,
+    "name": "Kazımcan Karataş",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 2500000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Bek",
+    "star": false
+  },
+  {
+    "id": 12,
+    "name": "Wilfried Singo",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Fildişi Sahili",
+    "value": 20000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Bek",
+    "star": true
+  },
+  {
+    "id": 13,
+    "name": "Roland Sallai",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Macaristan",
+    "value": 12000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Bek",
+    "star": false
+  },
+  {
+    "id": 14,
+    "name": "Lesley Ugochukwu",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Fransa",
+    "value": 22000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Ön Libero",
+    "star": true
+  },
+  {
+    "id": 15,
+    "name": "Lucas Torreira",
+    "clubs": [
+      "Pescara",
+      "Sampdoria",
+      "Arsenal",
+      "Atletico Madrid",
+      "Fiorentina",
+      "Galatasaray"
+    ],
+    "nation": "Uruguay",
+    "value": 15000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Ön Libero",
+    "star": true
+  },
+  {
+    "id": 16,
+    "name": "Mario Lemina",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Gabon",
+    "value": 3500000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Ön Libero",
+    "star": false
+  },
+  {
+    "id": 17,
+    "name": "Eyüp Aydın",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 700000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Ön Libero",
+    "star": false
+  },
+  {
+    "id": 18,
+    "name": "Gabriel Sara",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Brezilya",
+    "value": 27000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Merkez Orta Saha",
+    "star": true
+  },
+  {
+    "id": 19,
+    "name": "Renato Nhaga",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Gine-Bissau",
+    "value": 6000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Merkez Orta Saha",
+    "star": false
+  },
+  {
+    "id": 20,
+    "name": "İlkay Gündoğan",
+    "clubs": [
+      "Nürnberg",
+      "Borussia Dortmund",
+      "Manchester City",
+      "Barcelona",
+      "Galatasaray"
+    ],
+    "nation": "Almanya",
+    "value": 12000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Merkez Orta Saha",
+    "star": true
+  },
+  {
+    "id": 21,
+    "name": "Aleksey Batrakov",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Rusya",
+    "value": 28000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "On Numara",
+    "star": true
+  },
+  {
+    "id": 22,
+    "name": "Rafael Leão",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Portekiz",
+    "value": 40000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Kanat",
+    "star": true
+  },
+  {
+    "id": 23,
+    "name": "Barış Alper Yılmaz",
+    "clubs": [
+      "Ankara Demirspor",
+      "Keçiörengücü",
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 30000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Kanat",
+    "star": true
+  },
+  {
+    "id": 24,
+    "name": "Berat Luş",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 1000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Kanat",
+    "star": false
+  },
+  {
+    "id": 25,
+    "name": "Yunus Akgün",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 18000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Kanat",
+    "star": true
+  },
+  {
+    "id": 26,
+    "name": "Leroy Sané",
+    "clubs": [
+      "Schalke 04",
+      "Manchester City",
+      "Bayern Münih",
+      "Galatasaray"
+    ],
+    "nation": "Almanya",
+    "value": 45000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Kanat",
+    "star": true
+  },
+  {
+    "id": 27,
+    "name": "Armando Güner",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 500000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Kanat",
+    "star": false
+  },
+  {
+    "id": 28,
+    "name": "Victor Osimhen",
+    "clubs": [
+      "Wolfsburg",
+      "Charleroi",
+      "Lille",
+      "Napoli",
+      "Galatasaray"
+    ],
+    "nation": "Nijerya",
+    "value": 65000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Santrafor",
+    "star": true
+  },
+  {
+    "id": 29,
+    "name": "Deniz Gül",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "İsveç",
+    "value": 10000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Santrafor",
+    "star": false
+  },
+  {
+    "id": 30,
+    "name": "Ada Yüzgeç",
+    "clubs": [
+      "Galatasaray"
+    ],
+    "nation": "Türkiye",
+    "value": 100000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Santrafor",
+    "star": false
+  },
+  {
+    "id": 31,
+    "name": "Alban Lafont",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Fransa",
+    "value": 3000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Kaleci",
+    "star": false
+  },
+  {
+    "id": 32,
+    "name": "Burak Bozan",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 600000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Kaleci",
+    "star": false
+  },
+  {
+    "id": 33,
+    "name": "Lumbardh Dellova",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Kosova",
+    "value": 2000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 34,
+    "name": "David Bates",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "İskoçya",
+    "value": 1500000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 35,
+    "name": "Mehmet Yeşil",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 900000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 36,
+    "name": "Amadou Cissé",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Senegal",
+    "value": 800000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 37,
+    "name": "Miraç Acer",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 100000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 38,
+    "name": "Kahraman Demirtaş",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 50000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 39,
+    "name": "Umut Meraş",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 400000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Bek",
+    "star": false
+  },
+  {
+    "id": 40,
+    "name": "Ermal Krasniqi",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Kosova",
+    "value": 1000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Bek",
+    "star": false
+  },
+  {
+    "id": 41,
+    "name": "Ali Turap Bülbül",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 600000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Bek",
+    "star": false
+  },
+  {
+    "id": 42,
+    "name": "Gökhan Gül",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 1500000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Ön Libero",
+    "star": false
+  },
+  {
+    "id": 43,
+    "name": "Rayan Raveloson",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Madagaskar",
+    "value": 1200000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Ön Libero",
+    "star": false
+  },
+  {
+    "id": 44,
+    "name": "Cem Üstündag",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 700000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Merkez Orta Saha",
+    "star": false
+  },
+  {
+    "id": 45,
+    "name": "Furkan Soyalp",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 400000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Merkez Orta Saha",
+    "star": false
+  },
+  {
+    "id": 46,
+    "name": "Rayan Lutin",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Fransa",
+    "value": 800000,
+    "league": "Trendyol Süper Lig",
+    "pos": "On Numara",
+    "star": false
+  },
+  {
+    "id": 47,
+    "name": "Dia Saba",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "İsrail",
+    "value": 700000,
+    "league": "Trendyol Süper Lig",
+    "pos": "On Numara",
+    "star": false
+  },
+  {
+    "id": 48,
+    "name": "Yira Sor",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Nijerya",
+    "value": 4000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Kanat",
+    "star": false
+  },
+  {
+    "id": 49,
+    "name": "Mohamed Khalil",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Mısır",
+    "value": 250000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Kanat",
+    "star": false
+  },
+  {
+    "id": 50,
+    "name": "Samuel Ballet",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "İsviçre",
+    "value": 3500000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Kanat",
+    "star": false
+  },
+  {
+    "id": 51,
+    "name": "Dilhan Demir",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Türkiye",
+    "value": 100000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sağ Kanat",
+    "star": false
+  },
+  {
+    "id": 52,
+    "name": "Gift Orban",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Nijerya",
+    "value": 7000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Santrafor",
+    "star": false
+  },
+  {
+    "id": 53,
+    "name": "Mbaye Diagne",
+    "clubs": [
+      "Amed SK"
+    ],
+    "nation": "Senegal",
+    "value": 700000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Santrafor",
+    "star": false
+  },
+  {
+    "id": 54,
+    "name": "Ederson",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Brezilya",
+    "value": 8000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Kaleci",
+    "star": false
+  },
+  {
+    "id": 55,
+    "name": "Tarık Çetin",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Türkiye",
+    "value": 600000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Kaleci",
+    "star": false
+  },
+  {
+    "id": 56,
+    "name": "Mert Günok",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Türkiye",
+    "value": 300000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Kaleci",
+    "star": false
+  },
+  {
+    "id": 57,
+    "name": "Jayden Oosterwolde",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Hollanda",
+    "value": 17000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": true
+  },
+  {
+    "id": 58,
+    "name": "Kojo Oppong",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Gana",
+    "value": 12000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 59,
+    "name": "Nathan Aké",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Hollanda",
+    "value": 10000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 60,
+    "name": "Milan Škriniar",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Slovakya",
+    "value": 8000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 61,
+    "name": "Yiğit Efe Demir",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Türkiye",
+    "value": 4000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Stoper",
+    "star": false
+  },
+  {
+    "id": 62,
+    "name": "Archie Brown",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "İngiltere",
+    "value": 18000000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Bek",
+    "star": true
+  },
+  {
+    "id": 63,
+    "name": "Levent Mercan",
+    "clubs": [
+      "Fenerbahçe SK"
+    ],
+    "nation": "Türkiye",
+    "value": 3500000,
+    "league": "Trendyol Süper Lig",
+    "pos": "Sol Bek",
+    "star": false
+  }
+]
