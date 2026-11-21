@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3, 2, 1: Ortak Oyuncu | Futbol Bilgi Oyunu</title>
+  <title>Futbol Bilgi Arenası | 3-2-1 & 5-4-3-2-1</title>
   <style>
     :root {
       --bg: #0b1120;
@@ -20,7 +20,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; }
-    .container { width: 100%; max-width: 760px; }
+    .container { width: 100%; max-width: 780px; }
     header { text-align: center; margin-bottom: 18px; }
     header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, #10b981, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     header p { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
@@ -29,6 +29,7 @@
     .badge { padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 0.78rem; }
     .badge-ok { background: rgba(16,185,129,0.18); color: #34d399; }
     .badge-load { background: rgba(245,158,11,0.18); color: #fbbf24; }
+    .badge-amber { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
 
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); }
     .hidden { display: none !important; }
@@ -45,6 +46,8 @@
     .btn-primary:hover:not(:disabled) { background: var(--accent-hover); color: #fff; }
     .btn-blue { background: var(--blue); color: #fff; width: 100%; }
     .btn-blue:hover:not(:disabled) { background: #2563eb; }
+    .btn-amber { background: var(--amber); color: #1e1b05; width: 100%; }
+    .btn-amber:hover:not(:disabled) { background: #d97706; color: #fff; }
     .btn-danger { background: rgba(239,68,68,0.16); border: 1px solid rgba(239,68,68,0.45); color: #fca5a5; }
     .btn-danger:hover:not(:disabled) { background: var(--danger); color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
@@ -55,12 +58,15 @@
     .auth-tab { flex: 1; background: transparent; color: var(--muted); padding: 9px; border-radius: 8px; font-size: 0.9rem; }
     .auth-tab.active { background: var(--card-2); color: #fff; border: 1px solid var(--border); }
 
-    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+    .game-section-title { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); font-weight: 800; margin-bottom: 8px; }
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
     @media (max-width: 560px) { .mode-grid { grid-template-columns: 1fr; } }
     .mode-box { background: var(--card-2); border: 1px solid var(--border); border-radius: 14px; padding: 18px; text-align: center; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
     .mode-box:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .mode-box.featured { border-color: rgba(245,158,11,0.45); background: linear-gradient(145deg, #1b2640, #232a47); }
+    .mode-box.featured:hover { border-color: var(--amber); }
     .mode-box h3 { font-size: 1.15rem; margin-bottom: 6px; }
-    .mode-box p { font-size: 0.84rem; color: var(--muted); }
+    .mode-box p { font-size: 0.84rem; color: var(--muted); line-height: 1.4; }
 
     .ac-wrap { position: relative; }
     .ac-list { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid var(--border); border-radius: 10px; max-height: 240px; overflow-y: auto; z-index: 50; margin-top: 4px; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
@@ -81,6 +87,15 @@
     .team-card .name { font-size: 1.25rem; font-weight: 800; margin-top: 6px; color: #fff; }
     .vs-badge { font-weight: 900; color: var(--amber); font-size: 1.2rem; }
 
+    /* 5-4-3-2-1 Özel Stiller */
+    .prompt-hero { background: linear-gradient(135deg, #1b2640, #0f172a); border: 2px solid var(--amber); border-radius: 16px; padding: 20px; text-align: center; margin: 14px 0; }
+    .prompt-step-badge { display: inline-block; background: var(--amber); color: #1e1b05; font-weight: 900; padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; margin-bottom: 10px; }
+    .prompt-hero h2 { font-size: 1.35rem; line-height: 1.4; color: #fff; }
+    .prompt-hero span.hl { color: #38bdf8; text-decoration: underline; text-underline-offset: 4px; }
+    .slots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px; margin: 14px 0; }
+    .slot-box { background: var(--bg); border: 1px dashed var(--border); border-radius: 10px; padding: 12px 10px; text-align: center; font-size: 0.88rem; color: var(--muted); font-weight: 600; min-height: 46px; display: flex; align-items: center; justify-content: center; }
+    .slot-box.filled { background: rgba(16,185,129,0.16); border: 1px solid var(--accent); color: #34d399; font-weight: 700; }
+
     .reveal-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.35); border-radius: 14px; padding: 16px; margin-top: 16px; }
     .reveal-box h4 { color: #34d399; margin-bottom: 10px; font-size: 1rem; }
     .chip-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 200px; overflow-y: auto; }
@@ -90,20 +105,21 @@
     .room-code-box { background: var(--bg); border: 2px dashed var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 12px 0; }
     .room-code-box span { font-size: 2rem; font-weight: 900; letter-spacing: 4px; color: var(--accent); }
 
-    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .tab-btn { flex: 1; min-width: 130px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); padding: 9px 10px; font-size: 0.82rem; }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+    @media (max-width: 560px) { .tabs { grid-template-columns: repeat(2, 1fr); } }
+    .tab-btn { background: var(--bg); color: var(--muted); border: 1px solid var(--border); padding: 9px 8px; font-size: 0.8rem; }
     .tab-btn.active { background: var(--accent); color: #042f2e; border-color: var(--accent); }
     table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
     th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
     th { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; }
-    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; border: 1px solid var(--accent); padding: 12px 20px; border-radius: 12px; font-weight: 600; z-index: 999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; border: 1px solid var(--accent); padding: 12px 20px; border-radius: 12px; font-weight: 600; z-index: 999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 92vw; text-align: center; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>3, 2, 1: ORTAK OYUNCU</h1>
-      <p>İki takımda da forma giymiş futbolcuyu rakipten önce bul!</p>
+      <h1>FUTBOL BİLGİ ARENASI</h1>
+      <p>3, 2, 1: Ortak Oyuncu & 5, 4, 3, 2, 1 Futbol Oyunları</p>
     </header>
 
     <div class="status-bar">
@@ -121,7 +137,6 @@
         <button id="tabRegisterBtn" class="auth-tab" onclick="authModuSec('register')">📝 Kayıt Ol</button>
       </div>
 
-      <!-- Giriş Formu -->
       <div id="form-login">
         <p style="color:var(--muted); font-size:0.85rem; margin-bottom:14px;">Mevcut kullanıcı adın ve şifrenle giriş yap.</p>
         <div class="row">
@@ -139,7 +154,6 @@
         </div>
       </div>
 
-      <!-- Kayıt Formu -->
       <div id="form-register" class="hidden">
         <p style="color:var(--muted); font-size:0.85rem; margin-bottom:14px;">Yeni hesap oluştur ve skorlarını liderlik tablosuna yazdır!</p>
         <div class="row">
@@ -158,10 +172,9 @@
       </div>
     </div>
 
-    <!-- 2. ANA MENÜ -->
+    <!-- 2. ANA MENÜ (2 OYUN) -->
     <div id="screen-menu" class="card hidden">
-      <h3 style="margin-bottom:6px;">Oyun Modu Seç</h3>
-      <p style="color:var(--muted); font-size:0.88rem;">3 raund üzerinden oynanır. Her raundda tek tahmin hakkın vardır!</p>
+      <div class="game-section-title">⚽ Oyun 1 — 3, 2, 1: Ortak Oyuncu</div>
       <div class="mode-grid">
         <div class="mode-box" onclick="tekliModHazirla()">
           <h3>🤖 Tek Oyunculu</h3>
@@ -172,9 +185,95 @@
           <p>Oda kur veya kodla katıl. İkiniz de takımınızı gizlice yazın, 3-2-1 ile kapışın!</p>
         </div>
       </div>
+
+      <div class="game-section-title" style="color:var(--amber);">🔥 Oyun 2 — 5, 4, 3, 2, 1 (Tek Oyunculu)</div>
+      <div class="mode-box featured" onclick="g54321SetupAc()">
+        <h3>🎯 5, 4, 3, 2, 1: Kulüp & Uyruk Avı</h3>
+        <p>6 Büyük Lig (TR, ENG, ESP, ITA, GER, FRA) as takımlarından 5'ten 1'e geri sayımla istenen sayıda futbolcuyu bul! 3 can hakkın var.</p>
+      </div>
     </div>
 
-    <!-- 3. TEKLİ OYUNCU AYAR & TAKIM SEÇİMİ -->
+    <!-- =================================================================== -->
+    <!-- OYUN 2: 5, 4, 3, 2, 1 KURULUM & ARENA                               -->
+    <!-- =================================================================== -->
+    <div id="screen-54321-setup" class="card hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3>🎯 5, 4, 3, 2, 1 — Oyun Ayarları</h3>
+        <span class="badge badge-amber">6 Büyük Lig • As Takımlar</span>
+      </div>
+      <p style="color:var(--muted); font-size:0.86rem; margin-bottom:14px;">
+        Sırasıyla <strong>5 → 4 → 3 → 2 → 1</strong> futbolcu bulman gereken 5 aşamalı seri. Toplam <strong>3 can</strong> hakkın var!
+      </p>
+      <div class="row" style="margin-bottom:14px;">
+        <div class="col">
+          <label>Zorluk Seviyesi</label>
+          <select id="g5DiffSelect">
+            <option value="Kolay">Kolay (10+ seçenekli bol havuz • 90 sn • 1x Puan)</option>
+            <option value="Orta" selected>Orta (6–9 seçenekli havuz • 75 sn • 1.5x Puan)</option>
+            <option value="Zor">Zor (Tam sınırda nokta atışı • 60 sn • 2x Puan)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Takım Havuzu</label>
+          <select id="g5PoolSelect">
+            <option value="Karisik">Karışık (6 Büyük Lig)</option>
+            <option value="SuperLig">Süper Lig Ağırlıklı</option>
+            <option value="AvrupaDevleri">Avrupa Devleri</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn-outline" style="flex:1;" onclick="ekranGoster('screen-menu')">← Ana Menü</button>
+        <button class="btn-amber" style="flex:2;" onclick="g54321OyunuBaslat()">Oyunu Başlat (5'li Aşama)</button>
+      </div>
+    </div>
+
+    <div id="screen-54321-arena" class="card hidden">
+      <div class="arena-header">
+        <span id="g5StepLabel">Aşama 1/5 (5 Futbolcu)</span>
+        <span id="g5LivesLabel" style="font-size:1.1rem;">❤️❤️❤️</span>
+        <span class="timer-pill">⏱ <span id="g5Timer">75</span> sn</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="g5ScoreLabel" style="color:var(--accent);">Puan: 0</span>
+          <button class="btn-danger btn-sm" onclick="g54321Cik()">Çık</button>
+        </div>
+      </div>
+
+      <div class="prompt-hero">
+        <div class="prompt-step-badge" id="g5NeedBadge">5 FUTBOLCU BUL</div>
+        <h2 id="g5QuestionText">Arsenal forması giymiş 5 Fildişi Sahilli futbolcu söyle!</h2>
+      </div>
+
+      <div id="g5SlotsGrid" class="slots-grid"></div>
+
+      <div id="g5InputArea">
+        <div class="ac-wrap">
+          <label>Futbolcu Tahmini (En az 3 harf yaz ve listeden seç)</label>
+          <input type="text" id="g5PlayerInput" placeholder="Futbolcu adı yaz..." autocomplete="off" />
+          <div id="g5PlayerAC" class="ac-list hidden"></div>
+        </div>
+        <div style="margin-top:12px;">
+          <button id="g5SubmitBtn" class="btn-primary" onclick="g54321TahminGonder()">Tahmini Onayla</button>
+        </div>
+      </div>
+
+      <div id="g5RevealArea" class="hidden" style="margin-top:16px;">
+        <div id="g5Banner" style="padding:14px; border-radius:12px; font-weight:700; text-align:center; font-size:1.05rem;"></div>
+
+        <div class="reveal-box">
+          <h4>💡 Aa Tabi Ya! Bu Kriteri Sağlayan Tüm Futbolcular (<span id="g5AllCount">0</span>):</h4>
+          <div id="g5AllPlayersList" class="chip-list"></div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <button id="g5NextBtn" class="btn-amber" onclick="g54321SonrakiAdim()">Sonraki Aşamaya Geç →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- OYUN 1: 3, 2, 1 ORTAK OYUNCU EKRANLARI                              -->
+    <!-- =================================================================== -->
     <div id="screen-solo-setup" class="card hidden">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h3>🤖 Tek Oyunculu — Raund <span id="soloRoundNum">1</span>/3</h3>
@@ -208,7 +307,6 @@
       </div>
     </div>
 
-    <!-- 4. ÇOKLU OYUNCU LOBİ -->
     <div id="screen-lobby" class="card hidden">
       <h3 style="margin-bottom:14px;">⚔️ Çoklu Oyuncu (1v1) Lobisi</h3>
       <div class="row">
@@ -233,7 +331,6 @@
       </div>
     </div>
 
-    <!-- 5. ÇOKLU OYUNCU BEKLEME & TAKIM SEÇİMİ -->
     <div id="screen-mp-setup" class="card hidden">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <h3>Oda: <span id="mpRoomTitle" style="color:var(--accent);"></span> — Raund <span id="mpRoundNum">1</span>/3</h3>
@@ -266,7 +363,6 @@
       </div>
     </div>
 
-    <!-- 6. 3 - 2 - 1 GERİ SAYIM EKRANI -->
     <div id="screen-countdown" class="card hidden">
       <div class="countdown-box">
         <p style="color:var(--muted); font-size:1rem; margin-bottom:10px;">Takımlar Açılıyor...</p>
@@ -274,7 +370,6 @@
       </div>
     </div>
 
-    <!-- 7. AKTİF OYUN ARENASI -->
     <div id="screen-arena" class="card hidden">
       <div class="arena-header">
         <span id="arenaRoundInfo">Raund 1/3</span>
@@ -322,14 +417,16 @@
       </div>
     </div>
 
-    <!-- 8. LİDERLİK TABLOSU (2x2 - TAHTA HARİÇ MASKELİ) -->
+    <!-- 8. LİDERLİK TABLOSU (6 SEKMELİ - TAHTA HARİÇ MASKELİ) -->
     <div class="card">
       <h3 style="margin-bottom:12px;">🏆 Liderlik Tablosu (Top 10)</h3>
       <div class="tabs">
-        <button class="tab-btn active" onclick="liderlikSekmeSec('tekliBuAy', this)">Tekli — Bu Ay</button>
-        <button class="tab-btn" onclick="liderlikSekmeSec('tekliTum', this)">Tekli — Tüm Zamanlar</button>
-        <button class="tab-btn" onclick="liderlikSekmeSec('cokluBuAy', this)">Çoklu — Bu Ay</button>
-        <button class="tab-btn" onclick="liderlikSekmeSec('cokluTum', this)">Çoklu — Tüm Zamanlar</button>
+        <button class="tab-btn active" onclick="liderlikSekmeSec('tekliBuAy', this)">3-2-1 Tekli (Bu Ay)</button>
+        <button class="tab-btn" onclick="liderlikSekmeSec('tekliTum', this)">3-2-1 Tekli (Tümü)</button>
+        <button class="tab-btn" onclick="liderlikSekmeSec('cokluBuAy', this)">3-2-1 Çoklu (Bu Ay)</button>
+        <button class="tab-btn" onclick="liderlikSekmeSec('cokluTum', this)">3-2-1 Çoklu (Tümü)</button>
+        <button class="tab-btn" onclick="liderlikSekmeSec('g54321BuAy', this)">5-4-3-2-1 (Bu Ay)</button>
+        <button class="tab-btn" onclick="liderlikSekmeSec('g54321Tum', this)">5-4-3-2-1 (Tümü)</button>
       </div>
       <table>
         <thead>
@@ -356,7 +453,8 @@
     let ALL_CLUBS = [];
     let ALL_NATIONALS = [];
     let TEAM_TO_PLAYERS = {};
-    let LEADERBOARD_DATA = { tekliBuAy: [], tekliTum: [], cokluBuAy: [], cokluTum: [] };
+    let CLUB_NAT_PAIRS = []; // 6 Büyük Lig As Takım + Uyruk Havuzu
+    let LEADERBOARD_DATA = { tekliBuAy: [], tekliTum: [], cokluBuAy: [], cokluTum: [], g54321BuAy: [], g54321Tum: [] };
     let CURRENT_LB_TAB = "tekliBuAy";
 
     let USER = {
@@ -364,6 +462,7 @@
       tip: localStorage.getItem("f321_tip") || "Ogrenci"
     };
 
+    // Oyun 1 State
     let GAME = {
       mode: "solo",
       round: 1,
@@ -381,6 +480,87 @@
       lastMpStatus: "",
       countdownStartedForRound: 0
     };
+
+    // Oyun 2 (5-4-3-2-1) State
+    let G5 = {
+      active: false,
+      difficulty: "Orta",
+      pool: "Karisik",
+      stepIndex: 0, // 0..4 -> istenen sayı: 5 - stepIndex
+      lives: 3,
+      score: 0,
+      timer: 75,
+      timerInterval: null,
+      currentClub: "",
+      currentNat: "",
+      validPlayers: [],
+      foundPlayers: [],
+      usedPairKeys: new Set(),
+      gameOver: false
+    };
+
+    // 6 Büyük Lig As Takım Kuralları (U19/U21/B/II/Rezerv hariç)
+    const RESERVE_REGEX = /\b(u17|u18|u19|u20|u21|u23|ii|iii|b|c|reserves|reserve|youth|jong|castilla|atlético b|amateur|academy|paf)\b/i;
+
+    const SUPER_LIG_TEAMS = [
+      "galatasaray", "fenerbahce", "besiktas", "trabzonspor", "basaksehir", "istanbul basaksehir",
+      "konyaspor", "antalyaspor", "kasimpasa", "alanyaspor", "sivasspor", "kayserispor",
+      "rizespor", "caykur rizespor", "gaziantep", "adana demirspor", "hatayspor", "samsunspor",
+      "eyupspor", "goztepe", "bodrum", "ankaragucu", "bursaspor", "eskisehirspor", "genclerbirligi"
+    ];
+
+    const TOP_6_LEAGUE_CLUBS = [
+      // Türkiye Süper Lig
+      ...SUPER_LIG_TEAMS,
+      // İngiltere Premier League
+      "arsenal", "aston villa", "bournemouth", "brentford", "brighton", "chelsea", "crystal palace",
+      "everton", "fulham", "ipswich", "leicester", "liverpool", "manchester city", "manchester united",
+      "newcastle", "nottingham forest", "southampton", "tottenham", "west ham", "wolverhampton", "wolves",
+      "leeds", "burnley", "sheffield united", "sunderland", "blackburn", "bolton", "stoke", "swansea", "watford", "norwich",
+      // İspanya La Liga
+      "real madrid", "barcelona", "atletico madrid", "athletic bilbao", "athletic club", "real sociedad",
+      "real betis", "villarreal", "valencia", "sevilla", "celta vigo", "osasuna", "getafe", "rayo vallecano",
+      "mallorca", "girona", "alaves", "las palmas", "espanyol", "valladolid", "leganes", "deportivo", "malaga", "levante", "granada",
+      // İtalya Serie A
+      "inter", "internazionale", "ac milan", "milan", "juventus", "napoli", "roma", "as roma", "lazio",
+      "atalanta", "fiorentina", "bologna", "torino", "udinese", "genoa", "cagliari", "verona", "hellas verona",
+      "lecce", "empoli", "monza", "parma", "como", "venezia", "sampdoria", "sassuolo", "palermo", "chievo",
+      // Almanya Bundesliga
+      "bayern munich", "bayern munchen", "borussia dortmund", "bayer leverkusen", "rb leipzig", "eintracht frankfurt",
+      "vfb stuttgart", "stuttgart", "borussia monchengladbach", "wolfsburg", "vfl wolfsburg", "sc freiburg", "freiburg",
+      "tsg hoffenheim", "hoffenheim", "werder bremen", "fsv mainz", "mainz 05", "fc augsburg", "augsburg",
+      "union berlin", "vfl bochum", "bochum", "heidenheim", "st. pauli", "holstein kiel", "schalke 04", "hamburger sv", "koln", "hertha",
+      // Fransa Ligue 1
+      "paris saint-germain", "psg", "marseille", "olympique marseille", "monaco", "as monaco", "lyon", "olympique lyonnais",
+      "lille", "losc lille", "nice", "ogc nice", "lens", "rc lens", "rennes", "stade rennais", "reims", "stade de reims",
+      "toulouse", "montpellier", "strasbourg", "nantes", "fc nantes", "brest", "stade brestois", "auxerre", "angers", "saint-etienne", "le havre", "bordeaux"
+    ];
+
+    const EUROPE_GIANTS = [
+      "real madrid", "barcelona", "atletico madrid", "manchester city", "manchester united", "liverpool",
+      "arsenal", "chelsea", "tottenham", "bayern munich", "bayern munchen", "borussia dortmund",
+      "bayer leverkusen", "juventus", "inter", "ac milan", "napoli", "as roma", "paris saint-germain", "monaco", "lyon"
+    ];
+
+    const NAT_TR_MAP = {
+      "Turkey": "Türkiye", "Brazil": "Brezilya", "Argentina": "Arjantin", "France": "Fransa",
+      "Spain": "İspanya", "Germany": "Almanya", "Italy": "İtalya", "England": "İngiltere",
+      "Portugal": "Portekiz", "Netherlands": "Hollanda", "Belgium": "Belçika", "Croatia": "Hırvatistan",
+      "Uruguay": "Uruguay", "Colombia": "Kolombiya", "Cote d'Ivoire": "Fildişi Sahili", "Ivory Coast": "Fildişi Sahili",
+      "Senegal": "Senegal", "Nigeria": "Nijerya", "Cameroon": "Kamerun", "Ghana": "Gana",
+      "Morocco": "Fas", "Algeria": "Cezayir", "Egypt": "Mısır", "Serbia": "Sırbistan",
+      "Bosnia-Herzegovina": "Bosna-Hersek", "Switzerland": "İsviçre", "Austria": "Avusturya",
+      "Poland": "Polonya", "Denmark": "Danimarka", "Sweden": "İsveç", "Norway": "Norveç",
+      "Ukraine": "Ukrayna", "Russia": "Rusya", "Greece": "Yunanistan", "Japan": "Japonya",
+      "Korea, South": "Güney Kore", "South Korea": "Güney Kore", "United States": "ABD", "Mexico": "Meksika",
+      "Chile": "Şili", "Paraguay": "Paraguay", "Ecuador": "Ekvador", "Scotland": "İskoçya",
+      "Wales": "Galler", "Ireland": "İrlanda", "Czech Republic": "Çekya", "Slovakia": "Slovakya",
+      "Hungary": "Macaristan", "Romania": "Romanya", "Bulgaria": "Bulgaristan", "Kosovo": "Kosova", "Albania": "Arnavutluk"
+    };
+
+    function ulkeAdiTr(nat) {
+      return NAT_TR_MAP[nat] || nat;
+    }
 
     window.addEventListener("DOMContentLoaded", async () => {
       if (USER.name) {
@@ -474,6 +654,7 @@
 
     function cikisYap() {
       if (GAME.mode === "mp" && GAME.roomCode) odadanManuelCik(true);
+      clearInterval(G5.timerInterval);
       localStorage.removeItem("f321_user");
       localStorage.removeItem("f321_tip");
       USER = { name: "", tip: "Ogrenci" };
@@ -484,8 +665,22 @@
     }
 
     // =========================================================================
-    // YEREL dcaribou JSON VERİTABANINI YÜKLE (./players.json)
+    // YEREL JSON VERİTABANINI YÜKLE & 6 BÜYÜK LİG AS TAKIM HAVUZU OLUŞTUR
     // =========================================================================
+    function isTop6FirstTeam(clubName) {
+      if (!clubName) return false;
+      if (RESERVE_REGEX.test(clubName)) return false;
+      const norm = normalizeTr(clubName);
+      return TOP_6_LEAGUE_CLUBS.some(k => norm === k || norm.includes(k));
+    }
+
+    function getClubCategory(clubName) {
+      const norm = normalizeTr(clubName);
+      if (SUPER_LIG_TEAMS.some(k => norm === k || norm.includes(k))) return "SuperLig";
+      if (EUROPE_GIANTS.some(k => norm === k || norm.includes(k))) return "AvrupaDevleri";
+      return "DigerTop6";
+    }
+
     async function veritabaniniYukle() {
       const statusEl = document.getElementById("dbStatus");
       try {
@@ -498,6 +693,7 @@
         TEAM_TO_PLAYERS = {};
         const clubSet = new Set();
         const natSet = new Set();
+        const pairMap = {}; // "club|||nat" -> { club, nat, category, players: [] }
 
         for (const item of list) {
           const pObj = {
@@ -512,10 +708,29 @@
 
           PLAYERS.push(pObj);
           indeksleOyuncu(pObj);
+
+          // 5-4-3-2-1 için 6 Büyük Lig As Takım + Uyruk eşleşmelerini indeksle
+          if (pObj.national) {
+            const uniqueClubs = Array.from(new Set(pObj.teams));
+            for (const c of uniqueClubs) {
+              if (!isTop6FirstTeam(c)) continue;
+              const pKey = c + "|||" + pObj.national;
+              if (!pairMap[pKey]) {
+                pairMap[pKey] = {
+                  club: c,
+                  nat: pObj.national,
+                  category: getClubCategory(c),
+                  players: []
+                };
+              }
+              pairMap[pKey].players.push(pObj.name);
+            }
+          }
         }
 
         ALL_CLUBS = Array.from(clubSet).sort();
         ALL_NATIONALS = Array.from(natSet).sort();
+        CLUB_NAT_PAIRS = Object.values(pairMap).filter(p => p.players.length >= 1);
 
         statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.length.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
         baglaAutocomplete();
@@ -540,7 +755,11 @@
     // =========================================================================
     function ekranGoster(id) {
       if (!USER.name && id !== "screen-login") id = "screen-login";
-      ["screen-login", "screen-menu", "screen-solo-setup", "screen-lobby", "screen-mp-setup", "screen-countdown", "screen-arena"].forEach(s => {
+      [
+        "screen-login", "screen-menu",
+        "screen-solo-setup", "screen-lobby", "screen-mp-setup", "screen-countdown", "screen-arena",
+        "screen-54321-setup", "screen-54321-arena"
+      ].forEach(s => {
         document.getElementById(s).classList.add("hidden");
       });
       document.getElementById(id).classList.remove("hidden");
@@ -558,6 +777,7 @@
       setupAC("soloTeamInput", "soloTeamAC", () => getFilteredTeams(document.getElementById("soloPoolFilter").value), true);
       setupAC("mpTeamInput", "mpTeamAC", () => getFilteredTeams(GAME.mpFilter), true);
       setupAC("playerGuessInput", "playerGuessAC", () => PLAYERS.map(p => p.name), false);
+      setupAC("g5PlayerInput", "g5PlayerAC", () => PLAYERS.map(p => p.name), false);
     }
 
     function getFilteredTeams(filter) {
@@ -613,7 +833,250 @@
     }
 
     // =========================================================================
-    // TEK OYUNCULU (BOTA KARŞI)
+    // OYUN 2: 5, 4, 3, 2, 1 MANTIK & AKIŞ
+    // =========================================================================
+    function g54321SetupAc() {
+      if (CLUB_NAT_PAIRS.length === 0) {
+        return toast("Futbol veritabanı henüz yükleniyor, birkaç saniye bekle.");
+      }
+      ekranGoster("screen-54321-setup");
+    }
+
+    function g54321OyunuBaslat() {
+      G5.active = true;
+      G5.difficulty = document.getElementById("g5DiffSelect").value;
+      G5.pool = document.getElementById("g5PoolSelect").value;
+      G5.stepIndex = 0; // 0 -> 5 oyuncu, 1 -> 4 oyuncu, ..., 4 -> 1 oyuncu
+      G5.lives = 3;
+      G5.score = 0;
+      G5.usedPairKeys = new Set();
+      G5.gameOver = false;
+
+      g54321AdimHazirla();
+    }
+
+    function g54321SoruSec(istenenSayi) {
+      const diff = G5.difficulty;
+      const pool = G5.pool;
+
+      const filtrele = (strictPool, strictDiff) => {
+        return CLUB_NAT_PAIRS.filter(p => {
+          const key = p.club + "|||" + p.nat;
+          if (G5.usedPairKeys.has(key)) return false;
+          const cnt = p.players.length;
+          if (cnt < istenenSayi) return false;
+
+          if (strictPool) {
+            if (pool === "SuperLig" && p.category !== "SuperLig") return false;
+            if (pool === "AvrupaDevleri" && p.category !== "AvrupaDevleri") return false;
+          }
+
+          if (strictDiff) {
+            if (diff === "Kolay") return cnt >= Math.max(10, istenenSayi + 5);
+            if (diff === "Orta") return cnt >= Math.max(6, istenenSayi + 2) && cnt <= Math.max(11, istenenSayi + 5);
+            if (diff === "Zor") return cnt >= istenenSayi && cnt <= istenenSayi + 2;
+          }
+          return true;
+        });
+      };
+
+      let adaylar = filtrele(true, true);
+      if (adaylar.length === 0) adaylar = filtrele(true, false);
+      if (adaylar.length === 0) adaylar = filtrele(false, true);
+      if (adaylar.length === 0) adaylar = filtrele(false, false);
+
+      return adaylar[Math.floor(Math.random() * adaylar.length)];
+    }
+
+    function g54321AdimHazirla() {
+      const istenenSayi = 5 - G5.stepIndex;
+      const soru = g54321SoruSec(istenenSayi);
+      if (!soru) {
+        toast("Uygun soru üretilemedi.");
+        return ekranGoster("screen-menu");
+      }
+
+      G5.usedPairKeys.add(soru.club + "|||" + soru.nat);
+      G5.currentClub = soru.club;
+      G5.currentNat = soru.nat;
+      G5.validPlayers = soru.players;
+      G5.foundPlayers = [];
+      G5.timer = G5.difficulty === "Kolay" ? 90 : (G5.difficulty === "Orta" ? 75 : 60);
+
+      document.getElementById("g5StepLabel").textContent = `Aşama ${G5.stepIndex + 1}/5 (${istenenSayi} Futbolcu)`;
+      document.getElementById("g5ScoreLabel").textContent = `Puan: ${G5.score}`;
+      document.getElementById("g5Timer").textContent = G5.timer;
+      g54321CanGuncelle();
+
+      document.getElementById("g5NeedBadge").textContent = `${istenenSayi} FUTBOLCU BUL`;
+      document.getElementById("g5QuestionText").innerHTML =
+        `<span class="hl">${soru.club}</span> forması giymiş <strong>${istenenSayi}</strong> <span class="hl">${ulkeAdiTr(soru.nat)}</span> uyruklu futbolcu söyle!`;
+
+      g54321SlotlariCiz(istenenSayi);
+
+      document.getElementById("g5PlayerInput").value = "";
+      document.getElementById("g5PlayerInput").disabled = false;
+      document.getElementById("g5SubmitBtn").disabled = false;
+      document.getElementById("g5InputArea").classList.remove("hidden");
+      document.getElementById("g5RevealArea").classList.add("hidden");
+
+      ekranGoster("screen-54321-arena");
+
+      clearInterval(G5.timerInterval);
+      G5.timerInterval = setInterval(() => {
+        G5.timer--;
+        document.getElementById("g5Timer").textContent = G5.timer;
+        if (G5.timer <= 0) {
+          clearInterval(G5.timerInterval);
+          g54321OyunBitti("⏰ Süre doldu! Oyun sona erdi.");
+        }
+      }, 1000);
+    }
+
+    function g54321CanGuncelle() {
+      const dolu = "❤️".repeat(Math.max(0, G5.lives));
+      const bos = "🖤".repeat(Math.max(0, 3 - G5.lives));
+      document.getElementById("g5LivesLabel").textContent = dolu + bos;
+    }
+
+    function g54321SlotlariCiz(istenenSayi) {
+      const grid = document.getElementById("g5SlotsGrid");
+      let html = "";
+      for (let i = 0; i < istenenSayi; i++) {
+        if (G5.foundPlayers[i]) {
+          html += `<div class="slot-box filled">✅ ${G5.foundPlayers[i]}</div>`;
+        } else {
+          html += `<div class="slot-box">${i + 1}. Futbolcu</div>`;
+        }
+      }
+      grid.innerHTML = html;
+    }
+
+    function g54321TahminGonder() {
+      if (G5.gameOver) return;
+      const inp = document.getElementById("g5PlayerInput");
+      const tahmin = inp.value.trim();
+      if (!tahmin) return toast("Bir futbolcu adı seç.");
+
+      // Daha önce bu aşamada bulundu mu?
+      if (G5.foundPlayers.some(f => f.toLowerCase() === tahmin.toLowerCase())) {
+        inp.value = "";
+        return toast("⚠️ Bu futbolcuyu zaten yazdın, farklı bir isim seç!");
+      }
+
+      const eslesen = G5.validPlayers.find(v => v.toLowerCase() === tahmin.toLowerCase());
+      inp.value = "";
+
+      if (eslesen) {
+        G5.foundPlayers.push(eslesen);
+        const istenenSayi = 5 - G5.stepIndex;
+        const katsayi = G5.difficulty === "Zor" ? 2 : (G5.difficulty === "Orta" ? 1.5 : 1);
+        const oyuncuPuani = Math.round(40 * katsayi);
+        G5.score += oyuncuPuani;
+        document.getElementById("g5ScoreLabel").textContent = `Puan: ${G5.score}`;
+        g54321SlotlariCiz(istenenSayi);
+
+        if (G5.foundPlayers.length >= istenenSayi) {
+          clearInterval(G5.timerInterval);
+          const sureBonusu = Math.round(G5.timer * 3 * katsayi);
+          G5.score += sureBonusu;
+          document.getElementById("g5ScoreLabel").textContent = `Puan: ${G5.score}`;
+          g54321AdimTamamlandi(istenenSayi, sureBonusu);
+        } else {
+          toast(`✅ Doğru! (+${oyuncuPuani} Puan) • Kalan: ${istenenSayi - G5.foundPlayers.length}`);
+        }
+      } else {
+        G5.lives--;
+        g54321CanGuncelle();
+        if (G5.lives <= 0) {
+          clearInterval(G5.timerInterval);
+          g54321OyunBitti(`💔 3 can hakkın da bitti! ("${tahmin}" kriterlere uymuyor)`);
+        } else {
+          toast(`❌ Yanlış tahmin! 1 can gitti (Kalan can: ${G5.lives})`);
+        }
+      }
+    }
+
+    function g54321AdimTamamlandi(istenenSayi, sureBonusu) {
+      document.getElementById("g5InputArea").classList.add("hidden");
+      const banner = document.getElementById("g5Banner");
+      banner.style.background = "rgba(16,185,129,0.2)";
+      banner.style.color = "#34d399";
+      banner.textContent = `🎉 Harika! ${istenenSayi} futbolcuyu da buldun! (+${sureBonusu} Süre Bonusu)`;
+
+      g54321TumListeyiGoster();
+
+      const btn = document.getElementById("g5NextBtn");
+      btn.disabled = false;
+      if (G5.stepIndex >= 4) {
+        G5.gameOver = true;
+        btn.textContent = "🏆 Oyunu Bitir & Skoru Kaydet";
+      } else {
+        const sonrakiSayi = 5 - (G5.stepIndex + 1);
+        btn.textContent = `Sonraki Aşama (${sonrakiSayi} Futbolcu) →`;
+      }
+      document.getElementById("g5RevealArea").classList.remove("hidden");
+    }
+
+    function g54321OyunBitti(mesaj) {
+      G5.gameOver = true;
+      document.getElementById("g5InputArea").classList.add("hidden");
+      const banner = document.getElementById("g5Banner");
+      banner.style.background = "rgba(239,68,68,0.2)";
+      banner.style.color = "#f87171";
+      banner.textContent = `${mesaj} • Toplam Puan: ${G5.score}`;
+
+      g54321TumListeyiGoster();
+
+      const btn = document.getElementById("g5NextBtn");
+      btn.disabled = false;
+      btn.textContent = "Skoru Kaydet & Ana Menüye Dön";
+      document.getElementById("g5RevealArea").classList.remove("hidden");
+    }
+
+    function g54321TumListeyiGoster() {
+      document.getElementById("g5AllCount").textContent = G5.validPlayers.length;
+      const listEl = document.getElementById("g5AllPlayersList");
+      listEl.innerHTML = G5.validPlayers.map(name => {
+        const bulunduMu = G5.foundPlayers.some(f => f.toLowerCase() === name.toLowerCase());
+        return `<span class="chip ${bulunduMu ? "highlight" : ""}">${name}</span>`;
+      }).join("");
+    }
+
+    async function g54321SonrakiAdim() {
+      if (G5.gameOver || G5.stepIndex >= 4) {
+        const btn = document.getElementById("g5NextBtn");
+        btn.disabled = true;
+        btn.textContent = "Skor kaydediliyor...";
+        if (G5.score > 0) {
+          await postAPI({
+            action: "skorKaydet",
+            mod: "54321",
+            kullanici: USER.name,
+            tip: USER.tip,
+            skor: G5.score,
+            zorluk: G5.difficulty
+          });
+          liderlikYukle();
+        }
+        toast(`🏁 5-4-3-2-1 Tamamlandı! Toplam Puanın: ${G5.score}`);
+        G5.active = false;
+        ekranGoster("screen-menu");
+        return;
+      }
+
+      G5.stepIndex++;
+      g54321AdimHazirla();
+    }
+
+    function g54321Cik() {
+      clearInterval(G5.timerInterval);
+      G5.active = false;
+      ekranGoster("screen-menu");
+    }
+
+    // =========================================================================
+    // OYUN 1: TEK OYUNCULU (BOTA KARŞI)
     // =========================================================================
     function tekliModHazirla() {
       GAME.mode = "solo";
@@ -667,7 +1130,7 @@
     }
 
     // =========================================================================
-    // ÇOKLU OYUNCU (1v1 ODA + ÇIKIŞ/KOPMA TESPİTİ)
+    // OYUN 1: ÇOKLU OYUNCU (1v1 ODA + ÇIKIŞ/KOPMA TESPİTİ)
     // =========================================================================
     async function odaKur() {
       const filtre = document.getElementById("mpFilterSelect").value;
