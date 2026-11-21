@@ -710,13 +710,14 @@
       return harita[ascii] || ascii;
     }
 
-    async function veritabaniniYukle() {
+async function veritabaniniYukle() {
       const statusEl = document.getElementById("dbStatus");
       try {
         statusEl.innerHTML = `<span class="badge badge-load">⏳ Futbol veritabanı yükleniyor...</span>`;
 
-        const [res, guncelRes] = await Promise.all([
+        const [res, efsaneRes, guncelRes] = await Promise.all([
           fetch("./players.json"),
+          fetch("./efsaneler.json").catch(() => null),
           fetch("./guncel.json").catch(() => null)
         ]);
 
@@ -733,6 +734,32 @@
             national: item.m || ""
           };
           oyuncuMap.set(normalizeTr(pObj.name), pObj);
+        }
+
+        // Efsaneler listesini birleştir (mevcut oyuncunun eksik eski kulüplerini de tamamlar)
+        if (efsaneRes && efsaneRes.ok) {
+          const efsaneListe = await efsaneRes.json();
+          for (const e of efsaneListe) {
+            if (!e.n) continue;
+            const anahtar = normalizeTr(e.n);
+            const kulupListesi = Array.isArray(e.c) ? e.c.map(takimAdiDuzelt) : [];
+
+            if (oyuncuMap.has(anahtar)) {
+              const mevcut = oyuncuMap.get(anahtar);
+              if (!mevcut.national && e.m) mevcut.national = e.m;
+              for (const k of kulupListesi) {
+                if (!mevcut.teams.some(t => normalizeTr(t) === normalizeTr(k))) {
+                  mevcut.teams.push(k);
+                }
+              }
+            } else {
+              oyuncuMap.set(anahtar, {
+                name: e.n,
+                teams: kulupListesi,
+                national: e.m || ""
+              });
+            }
+          }
         }
 
         // GitHub'daki guncel.json dosyasını mevcut kadrolarla birleştir
@@ -802,7 +829,6 @@
         statusEl.innerHTML = `<span class="badge badge-load">⚠️ Veritabanı yüklenemedi, sayfayı yenileyin.</span>`;
       }
     }
-
     function indeksleOyuncu(pObj) {
       const tum = [...pObj.teams];
       if (pObj.national) tum.push(pObj.national);
