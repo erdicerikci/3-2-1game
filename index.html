@@ -795,7 +795,7 @@
         ALL_NATIONALS = Array.from(natSet).sort();
         CLUB_NAT_PAIRS = Object.values(pairMap).filter(p => p.players.length >= 1);
 
-        statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
+        statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.length.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
         baglaAutocomplete();
       } catch (err) {
         console.error(err);
