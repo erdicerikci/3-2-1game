@@ -905,6 +905,39 @@
       return num;
     }
 
+    function extractClubsList(item) {
+      if (!item || typeof item !== 'object') return [];
+      const candidates = [
+        item.clubs, item.Kulupler, item.Kulüpler, item.Kulup, item.Kulüp,
+        item.Takım, item.Takim, item.Takımlar, item.Takimlar, item.Team, item.Teams
+      ];
+      const list = [];
+      candidates.forEach(val => {
+        if (!val) return;
+        if (Array.isArray(val)) {
+          val.forEach(v => {
+            if (typeof v === 'string') {
+              v.split(/[,;|/]+/).forEach(part => list.push(part));
+            } else if (v && typeof v === 'object') {
+              const cName = v.name || v.club || v.team || v.ad || v.Takım || v.Kulüp || '';
+              if (cName) list.push(cName);
+            }
+          });
+        } else if (typeof val === 'string') {
+          val.split(/[,;|/]+/).forEach(part => list.push(part));
+        }
+      });
+      return [...new Set(list.map(cleanRawClubName).filter(Boolean))];
+    }
+
+    function extractPlayerName(item) {
+      if (!item || typeof item !== 'object') return '';
+      return String(
+        item.name || item.AdSoyad || item['İsim Soyisim'] || item.IsimSoyisim ||
+        item.isim || item.ad || item.player || item.oyuncu || item.Oyuncu || ''
+      ).trim();
+    }
+
     async function initDatabase() {
       const statusText = document.getElementById('dbStatusText');
       const countBadge = document.getElementById('dbCountBadge');
@@ -917,31 +950,37 @@
         const res = await fetch('guncel.json', { cache: 'no-store' });
         if (res.ok) {
           const json = await res.json();
-          const list = Array.isArray(json) ? json : (json.players || json.data || []);
+          const list = Array.isArray(json)
+            ? json
+            : (json.players || json.data || json.futbolcular || json.items || []);
           list.forEach((p, idx) => {
-            const rawClubs = Array.isArray(p.clubs) ? p.clubs : String(p.Kulupler || p.Takım || '').split(',');
-            const cleanClubs = [...new Set(rawClubs.map(cleanRawClubName).filter(Boolean))];
-            if (p.Takım && !cleanClubs.includes(cleanRawClubName(p.Takım))) {
-              cleanClubs.push(cleanRawClubName(p.Takım));
-            }
-            const val = parseMarketValue(p.value || p.MaxPiyasaDegeri || p['Piyasa Değeri']);
+            const name = extractPlayerName(p);
+            if (!name) return;
+            const cleanClubs = extractClubsList(p);
+            const val = parseMarketValue(
+              p.value || p.MaxPiyasaDegeri || p['Piyasa Değeri'] || p.PiyasaDegeri || p.marketValue
+            );
+            const leagueStr = String(p.league || p.Lig || p.League || 'Diğer').trim() || 'Diğer';
+            const nationStr = String(p.nation || p.MilliTakim || p['Milli Takım'] || p.Uyruk || 'Bilinmiyor').trim() || 'Bilinmiyor';
+            const posStr = String(p.pos || p.Pozisyon || p.Mevki || p.Position || 'Orta Saha').trim() || 'Orta Saha';
+
             loadedPlayers.push({
               id: p.id || p.PlayerID || idx + 1,
-              name: p.name || p.AdSoyad || p['İsim Soyisim'],
-              clubs: cleanClubs,
-              nation: p.nation || p.MilliTakim || 'Bilinmiyor',
+              name,
+              clubs: cleanClubs.length > 0 ? cleanClubs : [leagueStr],
+              nation: nationStr,
               value: val,
-              league: p.league || p.Lig || 'Diğer',
-              pos: p.pos || p.Pozisyon || 'Orta Saha',
-              star: val >= 15000000 || p.Kategori === 'Yildiz'
+              league: leagueStr,
+              pos: posStr,
+              star: val >= 15000000 || p.Kategori === 'Yildiz' || p.star === true
             });
           });
         }
       } catch (e) {
-        console.warn('guncel.json okunamadı, Google Apps Script / yedek havuz deneniyor.');
+        console.warn('guncel.json okunamadı, Google Apps Script / yedek havuz deneniyor.', e);
       }
 
-      // 2. Google Apps Script Backend varsa Oyuncular / FutbolcuBilgileri sekmesini çek
+      // 2. Google Apps Script Backend varsa oyuncu verisini çek
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         try {
           const sheetPlayers = await new Promise((resolve, reject) => {
@@ -951,30 +990,33 @@
               .getPlayersData();
           });
           if (Array.isArray(sheetPlayers) && sheetPlayers.length > 0) {
-            const mapByName = new Map(loadedPlayers.map(p => [p.name.toLowerCase(), p]));
+            const mapByName = new Map(loadedPlayers.map(p => [normalizeText(p.name), p]));
             sheetPlayers.forEach((sp, i) => {
-              const name = sp.AdSoyad || sp['İsim Soyisim'] || sp.name;
+              const name = extractPlayerName(sp);
               if (!name) return;
-              const key = name.toLowerCase();
-              const team = cleanRawClubName(sp.Takım || '');
-              const extraClubs = String(sp.Kulupler || '').split(',').map(cleanRawClubName).filter(Boolean);
-              if (team && !extraClubs.includes(team)) extraClubs.push(team);
-              const val = parseMarketValue(sp.MaxPiyasaDegeri || sp['Piyasa Değeri']);
+              const key = normalizeText(name);
+              const extraClubs = extractClubsList(sp);
+              const val = parseMarketValue(
+                sp.MaxPiyasaDegeri || sp['Piyasa Değeri'] || sp.PiyasaDegeri || sp.value
+              );
+              const leagueStr = String(sp.Lig || sp.league || '').trim();
+              const nationStr = String(sp.MilliTakim || sp['Milli Takım'] || sp.Uyruk || sp.nation || 'Bilinmiyor').trim();
+              const posStr = String(sp.Pozisyon || sp.Mevki || sp.pos || 'Orta Saha').trim();
 
               if (mapByName.has(key)) {
                 const existing = mapByName.get(key);
                 extraClubs.forEach(c => { if (!existing.clubs.includes(c)) existing.clubs.push(c); });
-                if (sp.Lig) existing.league = sp.Lig;
+                if (leagueStr) existing.league = leagueStr;
                 if (val > existing.value) existing.value = val;
               } else {
                 mapByName.set(key, {
                   id: sp.PlayerID || loadedPlayers.length + i + 1,
                   name,
-                  clubs: extraClubs,
-                  nation: sp.MilliTakim || 'Bilinmiyor',
+                  clubs: extraClubs.length > 0 ? extraClubs : [leagueStr || 'Trendyol Süper Lig'],
+                  nation: nationStr || 'Bilinmiyor',
                   value: val,
-                  league: sp.Lig || 'Trendyol Süper Lig',
-                  pos: sp.Pozisyon || 'Orta Saha',
+                  league: leagueStr || 'Trendyol Süper Lig',
+                  pos: posStr || 'Orta Saha',
                   star: val >= 15000000 || sp.Kategori === 'Yildiz'
                 });
               }
@@ -991,7 +1033,7 @@
         loadedPlayers = [...FALLBACK_PLAYERS];
       }
 
-      STATE.players = loadedPlayers.filter(p => p.name && p.clubs.length > 0);
+      STATE.players = loadedPlayers.filter(p => p.name && Array.isArray(p.clubs) && p.clubs.length > 0);
       spinner.style.display = 'none';
       statusText.textContent = 'Veritabanı hazır (As takımlar filtrelendi)';
       countBadge.textContent = `${STATE.players.length} Oyuncu`;
