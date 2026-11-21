@@ -2299,6 +2299,7 @@
           return;
         }
 
+        const seenNames = new Set();
         const matches = STATE.players
           .filter(p => normalizeText(p.n).includes(q))
           .sort((a, b) => {
@@ -2306,6 +2307,12 @@
             const bStarts = normalizeText(b.n).startsWith(q) ? 1 : 0;
             if (bStarts !== aStarts) return bStarts - aStarts;
             return (b.s || 0) - (a.s || 0);
+          })
+          .filter(p => {
+            const normName = normalizeText(p.n);
+            if (seenNames.has(normName)) return false;
+            seenNames.add(normName);
+            return true;
           })
           .slice(0, 12);
 
@@ -2318,11 +2325,7 @@
         matches.forEach((m, idx) => {
           const item = document.createElement('div');
           item.className = `autocomplete-item ${idx === 0 ? 'active-item' : ''}`;
-          const clubPreview = m.c.slice(0, 3).join(', ');
-          item.innerHTML = `
-            <strong>${m.n}</strong>
-            <span class="autocomplete-meta">${m.m} • ${clubPreview}</span>
-          `;
+          item.innerHTML = `<strong>${m.n}</strong>`;
           item.onclick = () => {
             input.value = m.n;
             STATE.selectedSuggestion = m;
@@ -2348,56 +2351,53 @@
       });
     }
 
-    function setupSingleTeamAutocomplete() {
-      const input = document.getElementById('singleUserTeamInput');
-      const listEl = document.getElementById('singleTeamAutocompleteList');
+    function submitCurrentGuess() {
+      if (STATE.gameEnded) return;
+      const input = document.getElementById('playerGuessInput');
+      const raw = input.value.trim();
+      if (!raw) return;
 
-      input.addEventListener('input', () => {
-        const q = normalizeText(input.value);
-        STATE.selectedSingleTeam = null;
+      const normGuess = normalizeText(raw);
+      const candidates = STATE.players.filter(p => normalizeText(p.n) === normGuess);
 
-        if (q.length < 3) {
-          listEl.style.display = 'none';
-          return;
+      input.value = '';
+      STATE.selectedSuggestion = null;
+      document.getElementById('autocompleteList').style.display = 'none';
+
+      if (candidates.length === 0) {
+        STATE.combo = 1;
+        updateGameHUD();
+        showToast('Veritabanında bu isimde futbolcu bulunamadı.');
+        return;
+      }
+
+      let matchedPlayer = candidates[0];
+
+      if (STATE.mode === 'tekli' && STATE.commonPair) {
+        const { userEntity, aiEntity } = STATE.commonPair;
+        const validMatch = candidates.find(p =>
+          checkPlayerMatchesEntity(p, userEntity) && checkPlayerMatchesEntity(p, aiEntity)
+        );
+        if (validMatch) matchedPlayer = validMatch;
+        handleCommonPlayerGuess(matchedPlayer);
+      } else if (STATE.mode === '54321') {
+        const stage = STATE.stages54321[STATE.currentStageIdx];
+        const validMatch = candidates.find(p =>
+          p.c.includes(stage.club) && p.mKey === stage.nationKey
+        );
+        if (validMatch) matchedPlayer = validMatch;
+        handle54321Guess(matchedPlayer);
+      } else if (STATE.mode === 'coklu') {
+        const room = STATE.room.lastState;
+        if (room) {
+          const validMatch = candidates.find(p =>
+            p.c.includes(room.kurucuTakim) && p.c.includes(room.misafirTakim)
+          );
+          if (validMatch) matchedPlayer = validMatch;
         }
-
-        const majorSet = new Set(getActiveMajorClubs());
-        const matches = STATE.selectableEntities
-          .filter(e => normalizeText(e.label).includes(q))
-          .sort((a, b) => {
-            const aMajor = (a.kind === 'nation' || majorSet.has(a.label)) ? 1 : 0;
-            const bMajor = (b.kind === 'nation' || majorSet.has(b.label)) ? 1 : 0;
-            if (bMajor !== aMajor) return bMajor - aMajor;
-            const aStarts = normalizeText(a.label).startsWith(q) ? 1 : 0;
-            const bStarts = normalizeText(b.label).startsWith(q) ? 1 : 0;
-            return bStarts - aStarts;
-          })
-          .slice(0, 10);
-
-        if (!matches.length) {
-          listEl.style.display = 'none';
-          return;
-        }
-
-        listEl.innerHTML = '';
-        matches.forEach((ent, idx) => {
-          const item = document.createElement('div');
-          item.className = `autocomplete-item ${idx === 0 ? 'active-item' : ''}`;
-          item.innerHTML = `<strong>${ent.label}</strong><span class="autocomplete-meta">${ent.sub}</span>`;
-          item.onclick = () => {
-            input.value = ent.label;
-            STATE.selectedSingleTeam = ent;
-            listEl.style.display = 'none';
-            confirmSingleUserTeam();
-          };
-          listEl.appendChild(item);
-        });
-        listEl.style.display = 'block';
-      });
-
-      bindAutocompleteKeyboard(input, listEl, confirmSingleUserTeam);
+        handleDuelGuess(matchedPlayer);
+      }
     }
-
     function setupRoomClubAutocomplete() {
       const input = document.getElementById('secretTeamInput');
       const listEl = document.getElementById('clubAutocompleteList');
