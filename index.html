@@ -849,8 +849,7 @@
       { id: 17, name: "Kevin De Bruyne", clubs: ["Genk", "Chelsea", "Werder Bremen", "Wolfsburg", "Manchester City"], nation: "Belçika", value: 45000000, league: "Premier League", pos: "On Numara", star: true },
       { id: 18, name: "Robert Lewandowski", clubs: ["Lech Poznan", "Borussia Dortmund", "Bayern Münih", "Barcelona"], nation: "Polonya", value: 15000000, league: "La Liga", pos: "Santrafor", star: true },
       { id: 19, name: "İlkay Gündoğan", clubs: ["Nürnberg", "Borussia Dortmund", "Manchester City", "Barcelona", "Galatasaray"], nation: "Almanya", value: 12000000, league: "Trendyol Süper Lig", pos: "Merkez Orta Saha", star: true },
-      { id: 20, name: "Leroy Sané", clubs: ["Schalke 04", "Manchester City", "Bayern Münih", "Galatasaray"], nation: "Almanya", value: 45000000, league: "Trendyol Süper Lig", pos: "Sağ Kanat", star: true },
-      { id: 21, name: "Hami Mandıralı", clubs: ["Trabzonspor", "Schalke 04", "Ankaragücü"], nation: "Türkiye", value: 2500000, league: "Trendyol Süper Lig", pos: "Santrafor", star: true }
+      { id: 20, name: "Leroy Sané", clubs: ["Schalke 04", "Manchester City", "Bayern Münih", "Galatasaray"], nation: "Almanya", value: 45000000, league: "Trendyol Süper Lig", pos: "Sağ Kanat", star: true }
     ];
 
     /* =========================================================================
@@ -880,7 +879,7 @@
     function normalizeClubName(club) {
       if (!club) return '';
       return club
-        .replace(/ (U15|U16|U17|U18|U19|U20|U21|U23|B Takımı|II|B|Youth|Altyapı|Reserve|Reserves) /gi, '')
+        .replace(/(U15|U16|U17|U18|U19|U20|U21|U23|B Takımı|II|B|Youth|Altyapı|Reserve|Reserves)/gi, '')
         .replace(/\s+/g, ' ')
         .trim();
     }
@@ -1267,10 +1266,9 @@
         matches.forEach(m => {
           const item = document.createElement('div');
           item.className = 'autocomplete-item';
-          const clubPreview = (m.clubs || []).slice(0, 2).join(', ');
           item.innerHTML = `
             <strong>${m.name}</strong>
-            <span class="autocomplete-meta">${clubPreview ? clubPreview + ' • ' : ''}${m.pos}</span>
+            <span class="autocomplete-meta">${m.nation} • ${m.pos}</span>
           `;
           item.onclick = () => {
             input.value = m.name;
@@ -1320,24 +1318,15 @@
       }
     }
 
-    function isClubMatch(playerClubs, targetLabel) {
-      const normTarget = normalizeText(normalizeClubName(targetLabel));
-      if (!normTarget) return false;
-      return (playerClubs || []).some(c => {
-        const normClub = normalizeText(normalizeClubName(c));
-        return normClub === normTarget || normClub.includes(normTarget) || normTarget.includes(normClub);
-      });
-    }
-
     function handle54321Guess(player) {
       // Önce aktif slotta kontrol et, olmazsa diğer açık slotlarda eşleşme ara
       let targetIdx = -1;
       const activeSlot = STATE.slots[STATE.activeSlotIndex];
 
-      if (activeSlot && !activeSlot.solvedBy && isClubMatch(player.clubs, activeSlot.label)) {
+      if (activeSlot && !activeSlot.solvedBy && player.clubs.includes(activeSlot.label)) {
         targetIdx = STATE.activeSlotIndex;
       } else {
-        targetIdx = STATE.slots.findIndex(s => !s.solvedBy && isClubMatch(player.clubs, s.label));
+        targetIdx = STATE.slots.findIndex(s => !s.solvedBy && player.clubs.includes(s.label));
       }
 
       if (targetIdx !== -1) {
