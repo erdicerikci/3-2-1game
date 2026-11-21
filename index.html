@@ -595,7 +595,7 @@
     }
 
     .autocomplete-item:hover .autocomplete-meta,
-    .autocomplete-item.active-item .autocomplete-meta {
+    .autocomplete-item.active-item.autocomplete-meta {
       color: #e2e8f0;
     }
 
@@ -816,7 +816,7 @@
       <!-- Zorluk ve Lig Filtresi -->
       <div class="card" id="singleSettingsCard">
         <div class="card-title">
-          <span>2. Zorluk &amp; Lig Filtresi</span>
+          <span>2. Zorluk &amp; Takım Havuzu</span>
         </div>
         <div class="input-group">
           <label>Zorluk Seviyesi</label>
@@ -827,14 +827,11 @@
           </div>
         </div>
         <div class="input-group" style="margin-bottom: 0;">
-          <label>Lig / Havuz Seçimi</label>
+          <label>Takım Havuzu (Yalnızca Büyük Kulüpler)</label>
           <div class="pill-row" id="leaguePills">
-            <button class="pill active" data-val="ALL" onclick="selectPill('league', 'ALL', this)">Tüm Ligler</button>
-            <button class="pill" data-val="Trendyol Süper Lig" onclick="selectPill('league', 'Trendyol Süper Lig', this)">Trendyol Süper Lig</button>
-            <button class="pill" data-val="Premier League" onclick="selectPill('league', 'Premier League', this)">Premier League</button>
-            <button class="pill" data-val="La Liga" onclick="selectPill('league', 'La Liga', this)">La Liga</button>
-            <button class="pill" data-val="Serie A" onclick="selectPill('league', 'Serie A', this)">Serie A</button>
-            <button class="pill" data-val="Bundesliga" onclick="selectPill('league', 'Bundesliga', this)">Bundesliga</button>
+            <button class="pill active" data-val="ALL" onclick="selectPill('league', 'ALL', this)">Tüm Ligler (Avrupa Devleri + Süper Lig)</button>
+            <button class="pill" data-val="AVRUPA" onclick="selectPill('league', 'AVRUPA', this)">Avrupa Devleri (Top 50)</button>
+            <button class="pill" data-val="SUPER_LIG" onclick="selectPill('league', 'SUPER_LIG', this)">Süper Lig (12 Büyük Kulüp)</button>
           </div>
         </div>
       </div>
@@ -1077,13 +1074,14 @@
       user: { username: 'Misafir', tip: 'Misafir', isLoggedIn: false },
       mode: 'tekli',       // 'tekli' (3-2-1 Tekli), 'coklu' (3-2-1 1v1), '54321' (5-4-3-2-1 Tekli)
       difficulty: 'Kolay',
-      league: 'ALL',
+      league: 'ALL',       // 'ALL' (Avrupa Devleri + Süper Lig), 'AVRUPA' (Top 50), 'SUPER_LIG' (12 Kulüp)
       players: [],         // Birleştirilmiş tüm futbolcular (efsaneler + players + guncel)
       clubIndex: new Map(),// Ana Kulüp -> Futbolcu[] dizini
       nationIndex: new Map(), // Uyruk Key -> { country, demonym, players }
       allClubs: [],        // En az 2 futbolcusu bulunan ana kulüpler
       selectableEntities: [], // 3-2-1 takım seçimi için kulüp + milli takım listesi
-      majorClubs: [],      // 5-4-3-2-1 için yalnızca üst düzey büyük kulüpler
+      superLigMajorClubs: [], // Süper Lig 12 büyük kulüp (veritabanında eşleşenler)
+      europeMajorClubs: [],   // Avrupa Devleri 50 büyük kulüp (veritabanında eşleşenler)
       filteredPool: [],
       usedPlayerKeys: new Set(),
       score: 0,
@@ -1114,6 +1112,46 @@
       leaderboards: null
     };
 
+    // Süper Lig: Kullanıcının belirlediği 12 kulüp
+    const SUPER_LIG_12 = [
+      'Galatasaray',
+      'Fenerbahçe',
+      'Beşiktaş',
+      'Trabzonspor',
+      'İstanbul Başakşehir',
+      'Konyaspor',
+      'Antalyaspor',
+      'Sivasspor',
+      'Alanyaspor',
+      'Kasımpaşa',
+      'Göztepe',
+      'Altay'
+    ];
+
+    // Avrupa Devleri: En büyük 50 Avrupa kulübü (Premier League ağırlıklı, lig başına 6-11 kulüp)
+    const EUROPE_TOP_50 = [
+      // Premier League (11)
+      'Manchester City', 'Manchester United', 'Liverpool', 'Arsenal', 'Chelsea',
+      'Tottenham Hotspur', 'Newcastle United', 'Aston Villa', 'West Ham United',
+      'Everton', 'Leicester City',
+      // La Liga (9)
+      'Real Madrid', 'Barcelona', 'Atlético Madrid', 'Sevilla', 'Valencia',
+      'Villarreal', 'Real Sociedad', 'Athletic Bilbao', 'Real Betis',
+      // Serie A (8)
+      'Juventus', 'Inter', 'AC Milan', 'Napoli', 'AS Roma',
+      'Lazio', 'Atalanta', 'Fiorentina',
+      // Bundesliga (7)
+      'Bayern Münih', 'Borussia Dortmund', 'Bayer Leverkusen', 'RB Leipzig',
+      'Eintracht Frankfurt', 'Borussia Mönchengladbach', 'VfL Wolfsburg',
+      // Ligue 1 (6)
+      'Paris Saint-Germain', 'Olympique Marseille', 'Olympique Lyon',
+      'AS Monaco', 'LOSC Lille', 'OGC Nice',
+      // Diğer Büyük Avrupa Ligleri: Portekiz, Hollanda, İskoçya, Ukrayna (9)
+      'Benfica', 'Porto', 'Sporting CP',
+      'Ajax', 'PSV Eindhoven', 'Feyenoord',
+      'Celtic', 'Rangers', 'Shakhtar Donetsk'
+    ];
+
     const YOUTH_WHITELIST = new Set([
       'willem ii', 'willem ii tilburg', 'b sad',
       'atl. nacional', 'atl. tucumán', 'atl. tucuman', 'atl. rafaela'
@@ -1122,53 +1160,78 @@
     const YOUTH_SUFFIX_REGEX = /\s+(?:U-?\d{2}|Yth\.?|Yt\.?|You\.?|Youth|Jugend|Jgd\.?|Altyap[ıi]|Reserves?|Res\.?|Amateurs?|Futuro|Castilla|Next\s*Gen|II|III|IV|[BC])$/i;
     const JONG_PREFIX_REGEX = /^Jong\s+/i;
 
+    // Farklı JSON dosyalarındaki kulüp isimlerini tek standart isme bağlar
     const CLUB_ALIAS_MAP = new Map([
+      // Süper Lig 12
       ['besiktas jk', 'Beşiktaş'], ['besiktas', 'Beşiktaş'],
       ['galatasaray sk', 'Galatasaray'], ['galatasaray', 'Galatasaray'],
       ['fenerbahce sk', 'Fenerbahçe'], ['fenerbahce', 'Fenerbahçe'],
-      ['trabzonspor', 'Trabzonspor'],
-      ['istanbul basaksehir fk', 'İstanbul Başakşehir'], ['istanbul basaksehir', 'İstanbul Başakşehir'],
-      ['goztepe', 'Göztepe'],
-      ['fc barcelona', 'Barcelona'], ['barcelona', 'Barcelona'],
-      ['fc bayern munchen', 'Bayern Münih'], ['fc bayern munich', 'Bayern Münih'], ['bayern munich', 'Bayern Münih'],
-      ['inter milan', 'Inter'], ['fc internazionale', 'Inter'], ['internazionale', 'Inter'],
-      ['ac milan', 'AC Milan'],
-      ['paris saint-germain', 'Paris Saint-Germain'], ['psg', 'Paris Saint-Germain'],
-      ['manchester united', 'Manchester United'],
-      ['manchester city', 'Manchester City'],
-      ['real madrid', 'Real Madrid'],
-      ['atletico madrid', 'Atlético Madrid'], ['atletico de madrid', 'Atlético Madrid'],
-      ['arsenal fc', 'Arsenal'], ['arsenal', 'Arsenal'],
-      ['chelsea fc', 'Chelsea'], ['chelsea', 'Chelsea'],
-      ['liverpool fc', 'Liverpool'], ['liverpool', 'Liverpool'],
-      ['tottenham hotspur', 'Tottenham Hotspur'],
-      ['juventus fc', 'Juventus'], ['juventus', 'Juventus'],
-      ['as roma', 'AS Roma'],
-      ['ssc napoli', 'Napoli'], ['napoli', 'Napoli'],
-      ['borussia dortmund', 'Borussia Dortmund'],
-      ['bayer 04 leverkusen', 'Bayer Leverkusen'], ['bayer leverkusen', 'Bayer Leverkusen'],
-      ['afc ajax', 'Ajax'], ['ajax', 'Ajax']
-    ]);
+      ['trabzonspor', 'Trabzonspor'], ['trabzonspor as', 'Trabzonspor'],
+      ['istanbul basaksehir fk', 'İstanbul Başakşehir'], ['istanbul basaksehir', 'İstanbul Başakşehir'], ['medipol basaksehir', 'İstanbul Başakşehir'], ['basaksehir', 'İstanbul Başakşehir'],
+      ['konyaspor', 'Konyaspor'], ['torku konyaspor', 'Konyaspor'], ['ittifak holding konyaspor', 'Konyaspor'],
+      ['antalyaspor', 'Antalyaspor'], ['fraport tav antalyaspor', 'Antalyaspor'],
+      ['sivasspor', 'Sivasspor'], ['demir grup sivasspor', 'Sivasspor'], ['ems yapi sivasspor', 'Sivasspor'],
+      ['alanyaspor', 'Alanyaspor'], ['corendon alanyaspor', 'Alanyaspor'],
+      ['kasimpasa', 'Kasımpaşa'], ['kasimpasa sk', 'Kasımpaşa'],
+      ['goztepe', 'Göztepe'], ['goztepe sk', 'Göztepe'],
+      ['altay', 'Altay'], ['altay sk', 'Altay'], ['altay izmir', 'Altay'],
 
-    // 5-4-3-2-1 için kesinlikle elenecek alt lig / 2. lig takımları
-    const LOWER_TIER_BLOCKLIST = new Set([
-      'portsmouth', 'portsmouth fc', 'real zaragoza', 'deportivo de la coruna',
-      'racing santander', 'real sporting', 'sporting gijon', 'malaga cf',
-      'hamburger sv', 'fc schalke 04', 'schalke 04', 'hertha bsc', '1.fc kaiserslautern',
-      'hannover 96', '1.fc nurnberg', 'nurnberg', 'fortuna dusseldorf',
-      'sunderland afc', 'coventry city', 'middlesbrough fc', 'stoke city', 'millwall fc',
-      'preston north end', 'blackburn rovers', 'west bromwich albion', 'norwich city',
-      'watford fc', 'hull city', 'swansea city', 'cardiff city', 'bristol city',
-      'palermo fc', 'brescia calcio', 'sampdoria', 'uc sampdoria', 'bari', 'ssc bari',
-      'as saint-etienne', 'girondins bordeaux', 'sm caen', 'fc metz'
-    ]);
+      // Avrupa Devleri 50
+      ['manchester city', 'Manchester City'], ['manchester city fc', 'Manchester City'], ['man city', 'Manchester City'],
+      ['manchester united', 'Manchester United'], ['manchester united fc', 'Manchester United'], ['man utd', 'Manchester United'],
+      ['liverpool', 'Liverpool'], ['liverpool fc', 'Liverpool'],
+      ['arsenal', 'Arsenal'], ['arsenal fc', 'Arsenal'],
+      ['chelsea', 'Chelsea'], ['chelsea fc', 'Chelsea'],
+      ['tottenham hotspur', 'Tottenham Hotspur'], ['tottenham', 'Tottenham Hotspur'],
+      ['newcastle united', 'Newcastle United'], ['newcastle', 'Newcastle United'],
+      ['aston villa', 'Aston Villa'], ['aston villa fc', 'Aston Villa'],
+      ['west ham united', 'West Ham United'], ['west ham', 'West Ham United'],
+      ['everton', 'Everton'], ['everton fc', 'Everton'],
+      ['leicester city', 'Leicester City'], ['leicester', 'Leicester City'],
 
-    const LOWER_LEAGUE_CLUB_HINT = /\b(1\.\s*Lig|2\.\s*Lig|3\.\s*Lig|Championship|League One|League Two|Serie B|2\.\s*Bundesliga|3\.\s*Liga|Segunda|Ligue 2)\b/i;
+      ['real madrid', 'Real Madrid'], ['real madrid cf', 'Real Madrid'],
+      ['barcelona', 'Barcelona'], ['fc barcelona', 'Barcelona'],
+      ['atletico madrid', 'Atlético Madrid'], ['atletico de madrid', 'Atlético Madrid'], ['club atletico de madrid', 'Atlético Madrid'],
+      ['sevilla', 'Sevilla'], ['sevilla fc', 'Sevilla'],
+      ['valencia', 'Valencia'], ['valencia cf', 'Valencia'],
+      ['villarreal', 'Villarreal'], ['villarreal cf', 'Villarreal'],
+      ['real sociedad', 'Real Sociedad'],
+      ['athletic bilbao', 'Athletic Bilbao'], ['athletic club', 'Athletic Bilbao'], ['athletic club de bilbao', 'Athletic Bilbao'],
+      ['real betis', 'Real Betis'], ['real betis balompie', 'Real Betis'],
 
-    const TOP_LEAGUES = new Set([
-      'Trendyol Süper Lig', 'Süper Lig',
-      'Premier League', 'La Liga', 'Serie A', 'Bundesliga', 'Ligue 1',
-      'Eredivisie', 'Liga Portugal'
+      ['juventus', 'Juventus'], ['juventus fc', 'Juventus'],
+      ['inter', 'Inter'], ['inter milan', 'Inter'], ['fc internazionale', 'Inter'], ['internazionale', 'Inter'], ['fc internazionale milano', 'Inter'],
+      ['ac milan', 'AC Milan'], ['milan', 'AC Milan'],
+      ['napoli', 'Napoli'], ['ssc napoli', 'Napoli'],
+      ['as roma', 'AS Roma'], ['roma', 'AS Roma'],
+      ['lazio', 'Lazio'], ['ss lazio', 'Lazio'],
+      ['atalanta', 'Atalanta'], ['atalanta bc', 'Atalanta'],
+      ['fiorentina', 'Fiorentina'], ['acf fiorentina', 'Fiorentina'],
+
+      ['bayern munih', 'Bayern Münih'], ['fc bayern munchen', 'Bayern Münih'], ['fc bayern munich', 'Bayern Münih'], ['bayern munich', 'Bayern Münih'], ['bayern munchen', 'Bayern Münih'],
+      ['borussia dortmund', 'Borussia Dortmund'], ['bv 09 borussia dortmund', 'Borussia Dortmund'],
+      ['bayer leverkusen', 'Bayer Leverkusen'], ['bayer 04 leverkusen', 'Bayer Leverkusen'],
+      ['rb leipzig', 'RB Leipzig'],
+      ['eintracht frankfurt', 'Eintracht Frankfurt'],
+      ['borussia monchengladbach', 'Borussia Mönchengladbach'], ['borussia mgladbach', 'Borussia Mönchengladbach'], ['bor. monchengladbach', 'Borussia Mönchengladbach'],
+      ['vfl wolfsburg', 'VfL Wolfsburg'], ['wolfsburg', 'VfL Wolfsburg'],
+
+      ['paris saint-germain', 'Paris Saint-Germain'], ['paris saint germain', 'Paris Saint-Germain'], ['psg', 'Paris Saint-Germain'], ['paris sg', 'Paris Saint-Germain'],
+      ['olympique marseille', 'Olympique Marseille'], ['olympique de marseille', 'Olympique Marseille'], ['marseille', 'Olympique Marseille'],
+      ['olympique lyon', 'Olympique Lyon'], ['olympique lyonnais', 'Olympique Lyon'], ['lyon', 'Olympique Lyon'],
+      ['as monaco', 'AS Monaco'], ['monaco', 'AS Monaco'],
+      ['losc lille', 'LOSC Lille'], ['lille', 'LOSC Lille'], ['lille osc', 'LOSC Lille'],
+      ['ogc nice', 'OGC Nice'], ['nice', 'OGC Nice'],
+
+      ['benfica', 'Benfica'], ['sl benfica', 'Benfica'],
+      ['porto', 'Porto'], ['fc porto', 'Porto'],
+      ['sporting cp', 'Sporting CP'], ['sporting lisbon', 'Sporting CP'], ['sporting clube de portugal', 'Sporting CP'],
+      ['ajax', 'Ajax'], ['afc ajax', 'Ajax'], ['ajax amsterdam', 'Ajax'],
+      ['psv eindhoven', 'PSV Eindhoven'], ['psv', 'PSV Eindhoven'],
+      ['feyenoord', 'Feyenoord'], ['feyenoord rotterdam', 'Feyenoord'],
+      ['celtic', 'Celtic'], ['celtic fc', 'Celtic'],
+      ['rangers', 'Rangers'], ['rangers fc', 'Rangers'],
+      ['shakhtar donetsk', 'Shakhtar Donetsk'], ['fc shakhtar donetsk', 'Shakhtar Donetsk'], ['fk shakhtar donetsk', 'Shakhtar Donetsk']
     ]);
 
     const NATION_INFO = {
@@ -1274,11 +1337,11 @@
       { n: "Arda Turan", m: "Turkey", c: ["Galatasaray", "Manisaspor", "Atlético Madrid", "Barcelona", "İstanbul Başakşehir"], s: 1, l: ["La Liga", "Trendyol Süper Lig"] },
       { n: "İlkay Gündoğan", m: "Germany", c: ["Nürnberg", "Borussia Dortmund", "Manchester City", "Barcelona", "Galatasaray"], s: 1, l: ["Bundesliga", "La Liga", "Premier League", "Trendyol Süper Lig"] },
       { n: "Leroy Sané", m: "Germany", c: ["Schalke 04", "Manchester City", "Bayern Münih", "Galatasaray"], s: 1, l: ["Bundesliga", "Premier League", "Trendyol Süper Lig"] },
-      { n: "Victor Osimhen", m: "Nigeria", c: ["Wolfsburg", "Charleroi", "Lille", "Napoli", "Galatasaray"], s: 1, l: ["Bundesliga", "Serie A", "Trendyol Süper Lig"] },
+      { n: "Victor Osimhen", m: "Nigeria", c: ["VfL Wolfsburg", "Charleroi", "LOSC Lille", "Napoli", "Galatasaray"], s: 1, l: ["Bundesliga", "Serie A", "Trendyol Süper Lig"] },
       { n: "Mauro Icardi", m: "Argentina", c: ["Sampdoria", "Inter", "Paris Saint-Germain", "Galatasaray"], s: 1, l: ["Serie A", "Trendyol Süper Lig"] },
-      { n: "Edin Džeko", m: "Bosnia and Herzegovina", c: ["Wolfsburg", "Manchester City", "AS Roma", "Inter", "Fenerbahçe", "Fiorentina"], s: 1, l: ["Bundesliga", "Premier League", "Serie A", "Trendyol Süper Lig"] },
-      { n: "Wesley Sneijder", m: "Netherlands", c: ["Ajax", "Real Madrid", "Inter", "Galatasaray", "Nice"], s: 1, l: ["La Liga", "Serie A", "Trendyol Süper Lig"] },
-      { n: "Didier Drogba", m: "Ivory Coast", c: ["Marseille", "Chelsea", "Galatasaray"], s: 1, l: ["Premier League", "Trendyol Süper Lig"] },
+      { n: "Edin Džeko", m: "Bosnia and Herzegovina", c: ["VfL Wolfsburg", "Manchester City", "AS Roma", "Inter", "Fenerbahçe", "Fiorentina"], s: 1, l: ["Bundesliga", "Premier League", "Serie A", "Trendyol Süper Lig"] },
+      { n: "Wesley Sneijder", m: "Netherlands", c: ["Ajax", "Real Madrid", "Inter", "Galatasaray", "OGC Nice"], s: 1, l: ["La Liga", "Serie A", "Trendyol Süper Lig"] },
+      { n: "Didier Drogba", m: "Ivory Coast", c: ["Olympique Marseille", "Chelsea", "Galatasaray"], s: 1, l: ["Premier League", "Trendyol Süper Lig"] },
       { n: "Samuel Eto'o", m: "Cameroon", c: ["Real Madrid", "Mallorca", "Barcelona", "Inter", "Chelsea", "Everton", "Sampdoria", "Antalyaspor", "Konyaspor"], s: 1, l: ["La Liga", "Premier League", "Serie A", "Trendyol Süper Lig"] },
       { n: "Roberto Carlos", m: "Brazil", c: ["Palmeiras", "Inter", "Real Madrid", "Fenerbahçe"], s: 1, l: ["La Liga", "Serie A", "Trendyol Süper Lig"] },
       { n: "Nicolas Anelka", m: "France", c: ["Paris Saint-Germain", "Arsenal", "Real Madrid", "Liverpool", "Manchester City", "Fenerbahçe", "Bolton Wanderers", "Chelsea", "Juventus"], s: 1, l: ["La Liga", "Premier League", "Serie A", "Trendyol Süper Lig"] }
@@ -1468,11 +1531,8 @@
       // Kulüp ve Uyruk dizinleri
       const cIdx = new Map();
       const nIdx = new Map();
-      const clubStats = new Map();
 
       for (const p of STATE.players) {
-        const hasTopLeague = Array.isArray(p.l) && p.l.some(lg => TOP_LEAGUES.has(lg));
-
         if (p.mKey && p.mKey !== 'unknown') {
           if (!nIdx.has(p.mKey)) {
             nIdx.set(p.mKey, { key: p.mKey, country: p.m, demonym: p.mDemonym, players: [] });
@@ -1483,13 +1543,8 @@
         for (const club of p.c) {
           if (!cIdx.has(club)) {
             cIdx.set(club, []);
-            clubStats.set(club, { total: 0, topFlightPlayers: 0, stars: 0 });
           }
           cIdx.get(club).push(p);
-          const st = clubStats.get(club);
-          st.total++;
-          if (hasTopLeague) st.topFlightPlayers++;
-          if (p.s === 1) st.stars++;
         }
       }
 
@@ -1500,6 +1555,10 @@
         .filter(([_, list]) => list.length >= 2)
         .sort((a, b) => b[1].length - a[1].length)
         .map(([club]) => club);
+
+      // Süper Lig 12 ve Avrupa Devleri 50 listelerini veritabanıyla eşleştir
+      STATE.superLigMajorClubs = SUPER_LIG_12.filter(c => (cIdx.get(c) || []).length >= 2);
+      STATE.europeMajorClubs = EUROPE_TOP_50.filter(c => (cIdx.get(c) || []).length >= 2);
 
       // 3-2-1 tekli seçim listesi: Hem kulüpler hem milli takımlar
       const clubEntities = STATE.allClubs.map(club => ({
@@ -1520,22 +1579,6 @@
         }));
       STATE.selectableEntities = [...clubEntities, ...nationEntities];
 
-      // 5-4-3-2-1 için YALNIZCA büyük/üst lig kulüpleri (alt lig takımları hariç)
-      STATE.majorClubs = Array.from(clubStats.entries())
-        .filter(([club, st]) => {
-          const norm = normalizeText(club);
-          if (LOWER_TIER_BLOCKLIST.has(norm) || LOWER_LEAGUE_CLUB_HINT.test(club)) return false;
-          if (st.total < 12) return false;
-          const topRatio = st.topFlightPlayers / st.total;
-          return (st.topFlightPlayers >= 10 && topRatio >= 0.45) || st.stars >= 8;
-        })
-        .sort((a, b) => (b[1].topFlightPlayers + b[1].stars) - (a[1].topFlightPlayers + a[1].stars))
-        .map(([club]) => club);
-
-      if (STATE.majorClubs.length < 5) {
-        STATE.majorClubs = STATE.allClubs.filter(c => !LOWER_TIER_BLOCKLIST.has(normalizeText(c))).slice(0, 30);
-      }
-
       const loadedParts = [
         efsData ? 'Efsaneler' : null,
         plyData ? 'Players' : null,
@@ -1547,6 +1590,20 @@
         ? `Veritabanı hazır (${loadedParts.join(' + ')})`
         : 'Yerel örnek veritabanı yüklendi';
       countBadge.textContent = `${STATE.players.length.toLocaleString('tr-TR')} Oyuncu`;
+    }
+
+    /* =========================================================================
+       AKTİF BÜYÜK KULÜP HAVUZU (AVRUPA DEVLERİ / SÜPER LİG / TÜM LİGLER)
+       ========================================================================= */
+    function getActiveMajorClubs() {
+      if (STATE.league === 'SUPER_LIG') {
+        return STATE.superLigMajorClubs.length ? STATE.superLigMajorClubs : SUPER_LIG_12;
+      }
+      if (STATE.league === 'AVRUPA') {
+        return STATE.europeMajorClubs.length ? STATE.europeMajorClubs : EUROPE_TOP_50;
+      }
+      const combined = [...STATE.europeMajorClubs, ...STATE.superLigMajorClubs];
+      return combined.length ? combined : [...EUROPE_TOP_50, ...SUPER_LIG_12];
     }
 
     /* =========================================================================
@@ -1658,12 +1715,8 @@
        OYUN BAŞLATMA
        ========================================================================= */
     function buildQuestionSeedPool() {
-      let pool = [...STATE.players];
-
-      if (STATE.league !== 'ALL') {
-        const byLeague = pool.filter(p => Array.isArray(p.l) && p.l.includes(STATE.league));
-        if (byLeague.length >= 10) pool = byLeague;
-      }
+      const majorSet = new Set(getActiveMajorClubs());
+      let pool = STATE.players.filter(p => p.c.some(c => majorSet.has(c)));
 
       if (STATE.difficulty === 'Kolay') {
         const stars = pool.filter(p => p.s === 1);
@@ -1673,7 +1726,7 @@
         if (mid.length >= 10) pool = mid;
       }
 
-      return pool;
+      return pool.length ? pool : STATE.players;
     }
 
     function startSelectedGame() {
@@ -1714,7 +1767,7 @@
     }
 
     /* =========================================================================
-       MOD 1: 3-2-1 TEKLİ (OYUNCU TAKIMINI SEÇER, BİLGİSAYAR EŞLEŞEN TAKIMI AÇAR)
+       MOD 1: 3-2-1 TEKLİ (OYUNCU TAKIMINI SEÇER, BİLGİSAYAR EŞLEŞEN BÜYÜK TAKIMI AÇAR)
        ========================================================================= */
     function openSingleTeamPicker() {
       clearInterval(STATE.timerInterval);
@@ -1744,7 +1797,6 @@
         return;
       }
 
-      // Kullanıcının seçtiği takımda oynamış havuz oyuncuları
       const matchingPlayers = entity.kind === 'club'
         ? (STATE.clubIndex.get(entity.label) || [])
         : (STATE.nationIndex.get(entity.key)?.players || []);
@@ -1754,7 +1806,8 @@
         return;
       }
 
-      // Bilgisayarın aynı anda açacağı 2. takımı bul (ortak oyuncusu olan farklı kulüp veya milli takım)
+      // Bilgisayarın seçeceği 2. kulüp yalnızca aktif büyük kulüp havuzundan (Avrupa Devleri / Süper Lig) seçilir
+      const majorClubSet = new Set(getActiveMajorClubs());
       const seedPool = matchingPlayers.filter(p => STATE.filteredPool.includes(p));
       const poolToUse = seedPool.length > 0 ? seedPool : matchingPlayers;
       const shuffledAnchor = [...poolToUse].sort(() => Math.random() - 0.5);
@@ -1763,10 +1816,12 @@
 
       for (const anchor of shuffledAnchor) {
         if (entity.kind === 'club') {
-          // Bilgisayar başka bir kulüp veya oyuncunun milli takımını seçebilir
-          const otherClubs = anchor.c.filter(c => c !== entity.label).sort(() => Math.random() - 0.5);
-          if (otherClubs.length > 0 && Math.random() < 0.7) {
-            const clubB = otherClubs[0];
+          const otherMajorClubs = anchor.c
+            .filter(c => c !== entity.label && majorClubSet.has(c))
+            .sort(() => Math.random() - 0.5);
+
+          if (otherMajorClubs.length > 0 && Math.random() < 0.72) {
+            const clubB = otherMajorClubs[0];
             const solutions = STATE.players.filter(p => p.c.includes(entity.label) && p.c.includes(clubB));
             if (solutions.length > 0) {
               aiChoice = { kind: 'club', label: clubB, solutions };
@@ -1780,8 +1835,8 @@
               break;
             }
           }
-          if (otherClubs.length > 0) {
-            const clubB = otherClubs[0];
+          if (otherMajorClubs.length > 0) {
+            const clubB = otherMajorClubs[0];
             const solutions = STATE.players.filter(p => p.c.includes(entity.label) && p.c.includes(clubB));
             if (solutions.length > 0) {
               aiChoice = { kind: 'club', label: clubB, solutions };
@@ -1789,10 +1844,11 @@
             }
           }
         } else {
-          // Kullanıcı milli takım seçtiyse bilgisayar kulüp seçer
-          const clubs = [...anchor.c].sort(() => Math.random() - 0.5);
-          if (clubs.length > 0) {
-            const clubB = clubs[0];
+          const majorClubs = anchor.c
+            .filter(c => majorClubSet.has(c))
+            .sort(() => Math.random() - 0.5);
+          if (majorClubs.length > 0) {
+            const clubB = majorClubs[0];
             const solutions = STATE.players.filter(p => p.mKey === entity.key && p.c.includes(clubB));
             if (solutions.length > 0) {
               aiChoice = { kind: 'club', label: clubB, solutions };
@@ -1803,7 +1859,7 @@
       }
 
       if (!aiChoice) {
-        showToast('Bu takımla ortak oyuncu bulunamadı, başka bir takım seçin.');
+        showToast('Seçili havuzdaki büyük kulüplerle ortak oyuncu bulunamadı, başka takım seçin.');
         return;
       }
 
@@ -1813,7 +1869,6 @@
         solutions: aiChoice.solutions
       };
 
-      // Kısa 3-2-1 açılış animasyonu
       playShort321Reveal(() => {
         document.getElementById('singleTeamPickCard').style.display = 'none';
         document.getElementById('commonPlayerContainer').style.display = 'flex';
@@ -1908,24 +1963,8 @@
     /* =========================================================================
        MOD 3: 5-4-3-2-1 TEKLİ (SIRALI AŞAMALAR: 5 -> 4 -> 3 -> 2 -> 1, HER BİRİ 30 SN)
        ========================================================================= */
-    function get54321CandidateClubs() {
-      if (STATE.league !== 'ALL') {
-        const leagueClubCounts = new Map();
-        for (const p of STATE.players) {
-          if (Array.isArray(p.l) && p.l.includes(STATE.league)) {
-            for (const c of p.c) {
-              leagueClubCounts.set(c, (leagueClubCounts.get(c) || 0) + 1);
-            }
-          }
-        }
-        const filteredMajor = STATE.majorClubs.filter(c => (leagueClubCounts.get(c) || 0) >= 4);
-        if (filteredMajor.length >= 5) return filteredMajor;
-      }
-      return STATE.majorClubs;
-    }
-
     function init54321Stages() {
-      const candidateClubs = [...get54321CandidateClubs()].sort(() => Math.random() - 0.5);
+      const candidateClubs = [...getActiveMajorClubs()].sort(() => Math.random() - 0.5);
       const counts = [5, 4, 3, 2, 1];
       const usedCombos = new Set();
       STATE.stages54321 = [];
@@ -1952,7 +1991,6 @@
             byNation.get(p.mKey).players.push(p);
           }
 
-          // Yeterli sayıda geçerli oyuncusu bulunan uyrukları seç
           const validNations = Array.from(byNation.values())
             .filter(g => g.players.length >= reqCount + 1)
             .sort(() => Math.random() - 0.5);
@@ -1971,7 +2009,7 @@
               allValidPlayers: nat.players,
               foundPlayers: [],
               revealedPlayers: [],
-              status: 'pending' // 'pending' | 'done' | 'missed'
+              status: 'pending'
             };
             break;
           }
@@ -2323,9 +2361,13 @@
           return;
         }
 
+        const majorSet = new Set(getActiveMajorClubs());
         const matches = STATE.selectableEntities
           .filter(e => normalizeText(e.label).includes(q))
           .sort((a, b) => {
+            const aMajor = (a.kind === 'nation' || majorSet.has(a.label)) ? 1 : 0;
+            const bMajor = (b.kind === 'nation' || majorSet.has(b.label)) ? 1 : 0;
+            if (bMajor !== aMajor) return bMajor - aMajor;
             const aStarts = normalizeText(a.label).startsWith(q) ? 1 : 0;
             const bStarts = normalizeText(b.label).startsWith(q) ? 1 : 0;
             return bStarts - aStarts;
@@ -2494,7 +2536,7 @@
         const res = await apiPost({
           action: 'odaKur',
           kullanici: STATE.user.username,
-          filtre: STATE.league === 'ALL' ? 'Hepsi' : STATE.league
+          filtre: 'Hepsi'
         });
         if (res && res.status === 'ok') {
           STATE.room.code = res.odaKodu;
