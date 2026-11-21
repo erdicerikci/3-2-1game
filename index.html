@@ -51,6 +51,10 @@
     .btn-outline:hover:not(:disabled) { background: var(--card-2); }
     .btn-sm { padding: 7px 12px; font-size: 0.82rem; }
 
+    .auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg); padding: 5px; border-radius: 12px; border: 1px solid var(--border); }
+    .auth-tab { flex: 1; background: transparent; color: var(--muted); padding: 9px; border-radius: 8px; font-size: 0.9rem; }
+    .auth-tab.active { background: var(--card-2); color: #fff; border: 1px solid var(--border); }
+
     .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
     @media (max-width: 560px) { .mode-grid { grid-template-columns: 1fr; } }
     .mode-box { background: var(--card-2); border: 1px solid var(--border); border-radius: 14px; padding: 18px; text-align: center; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
@@ -110,22 +114,47 @@
       </div>
     </div>
 
-    <!-- 1. GİRİŞ -->
+    <!-- 1. GİRİŞ & KAYIT OL -->
     <div id="screen-login" class="card">
-      <h3 style="margin-bottom:6px;">Oyuncu Girişi</h3>
-      <p style="color:var(--muted); font-size:0.85rem; margin-bottom:14px;">Kullanıcı adın ve şifrenle giriş yap.</p>
-      <div class="row">
-        <div class="col">
-          <label>Kullanıcı Adı</label>
-          <input type="text" id="inputUsername" placeholder="Örn: 9A_Tahta" autocomplete="username" />
+      <div class="auth-tabs">
+        <button id="tabLoginBtn" class="auth-tab active" onclick="authModuSec('login')">🔑 Giriş Yap</button>
+        <button id="tabRegisterBtn" class="auth-tab" onclick="authModuSec('register')">📝 Kayıt Ol</button>
+      </div>
+
+      <!-- Giriş Formu -->
+      <div id="form-login">
+        <p style="color:var(--muted); font-size:0.85rem; margin-bottom:14px;">Mevcut kullanıcı adın ve şifrenle giriş yap.</p>
+        <div class="row">
+          <div class="col">
+            <label>Kullanıcı Adı</label>
+            <input type="text" id="inputUsername" placeholder="Örn: 9A_Tahta" autocomplete="username" />
+          </div>
+          <div class="col">
+            <label>Şifre</label>
+            <input type="password" id="inputPassword" placeholder="••••" autocomplete="current-password" />
+          </div>
         </div>
-        <div class="col">
-          <label>Şifre</label>
-          <input type="password" id="inputPassword" placeholder="••••" autocomplete="current-password" />
+        <div style="margin-top:16px;">
+          <button id="btnLogin" class="btn-primary" onclick="kullaniciGirisYap()">Giriş Yap</button>
         </div>
       </div>
-      <div style="margin-top:16px;">
-        <button id="btnLogin" class="btn-primary" onclick="kullaniciGirisYap()">Giriş Yap</button>
+
+      <!-- Kayıt Formu -->
+      <div id="form-register" class="hidden">
+        <p style="color:var(--muted); font-size:0.85rem; margin-bottom:14px;">Yeni hesap oluştur ve skorlarını liderlik tablosuna yazdır!</p>
+        <div class="row">
+          <div class="col">
+            <label>Yeni Kullanıcı Adı (3-24 karakter)</label>
+            <input type="text" id="regUsername" placeholder="Örn: ahmet_1905" autocomplete="off" />
+          </div>
+          <div class="col">
+            <label>Şifre (En az 3 karakter)</label>
+            <input type="password" id="regPassword" placeholder="••••" autocomplete="new-password" />
+          </div>
+        </div>
+        <div style="margin-top:16px;">
+          <button id="btnRegister" class="btn-blue" onclick="kullaniciKayitOl()">Kayıt Ol & Oyuna Başla</button>
+        </div>
       </div>
     </div>
 
@@ -369,8 +398,16 @@
     });
 
     // =========================================================================
-    // KULLANICI GİRİŞ & ÇIKIŞ
+    // KULLANICI GİRİŞ, KAYIT & ÇIKIŞ
     // =========================================================================
+    function authModuSec(mod) {
+      const isLogin = mod === "login";
+      document.getElementById("tabLoginBtn").classList.toggle("active", isLogin);
+      document.getElementById("tabRegisterBtn").classList.toggle("active", !isLogin);
+      document.getElementById("form-login").classList.toggle("hidden", !isLogin);
+      document.getElementById("form-register").classList.toggle("hidden", isLogin);
+    }
+
     async function kullaniciGirisYap() {
       const ad = document.getElementById("inputUsername").value.trim();
       const sifre = document.getElementById("inputPassword").value.trim();
@@ -400,6 +437,35 @@
       }
     }
 
+    async function kullaniciKayitOl() {
+      const ad = document.getElementById("regUsername").value.trim();
+      const sifre = document.getElementById("regPassword").value.trim();
+      if (!ad || !sifre) return toast("Kullanıcı adı ve şifre belirle.");
+
+      const btn = document.getElementById("btnRegister");
+      btn.disabled = true;
+      btn.textContent = "Hesap oluşturuluyor...";
+
+      try {
+        const res = await postAPI({ action: "kayitOl", kullanici: ad, sifre: sifre });
+        if (res.status === "ok") {
+          USER.name = res.kullanici;
+          USER.tip = res.tip || "Misafir";
+          localStorage.setItem("f321_user", USER.name);
+          localStorage.setItem("f321_tip", USER.tip);
+          toast(`Kayıt tamamlandı! Hoş geldin, ${USER.name}!`);
+          oturumAcildiArayuzu();
+        } else {
+          toast(res.message || "Kayıt oluşturulamadı!");
+        }
+      } catch (e) {
+        toast("Sunucuya bağlanılamadı, tekrar dene.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Kayıt Ol & Oyuna Başla";
+      }
+    }
+
     function oturumAcildiArayuzu() {
       document.getElementById("aktifKullaniciLabel").textContent = `👤 ${USER.name}`;
       document.getElementById("userBarRight").classList.remove("hidden");
@@ -413,6 +479,7 @@
       USER = { name: "", tip: "Ogrenci" };
       document.getElementById("userBarRight").classList.add("hidden");
       document.getElementById("inputPassword").value = "";
+      document.getElementById("regPassword").value = "";
       ekranGoster("screen-login");
     }
 
@@ -450,7 +517,7 @@
         ALL_CLUBS = Array.from(clubSet).sort();
         ALL_NATIONALS = Array.from(natSet).sort();
 
-        statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.length.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
+        statusEl.innerHTML = `<span class="badge badge-ok">✅ ${PLAYERS.length.toLocaleString("tr-TR")} Futbolcu • ${ALL_CLUBS.toLocaleString("tr-TR")} Kulüp Hazır</span>`;
         baglaAutocomplete();
       } catch (err) {
         console.error(err);
@@ -566,7 +633,6 @@
 
       if (!gercekTakim) return toast("Lütfen açılan listeden geçerli bir takım seç.");
 
-      // Kullanıcı milli takım seçtiyse bot karşısına sadece kulüp takımı çıkarsın
       const secilenMilliMi = ALL_NATIONALS.some(n => n.toLowerCase() === gercekTakim.toLowerCase());
       const rakipHavuzu = secilenMilliMi ? ALL_CLUBS : havuz;
 
@@ -741,9 +807,10 @@
         if ((res.durum === "round_bitti" || res.durum === "round_gecersiz") && GAME.lastMpStatus === "oynaniyor") {
           clearInterval(GAME.timerInterval);
           GAME.score = GAME.mpRole === "kurucu" ? Number(res.kurucuPuan) : Number(res.misafirPuan);
+          document.getElementById("arenaScoreInfo").textContent = `Puan: ${GAME.score}`;
           const mesaj = res.durum === "round_bitti"
             ? `🏆 Raund Tamamlandı! (${res.roundKazananlar.split(",").pop().trim()})`
-            : "❌ İki oyuncu da yanlış tahmin yaptı! Raund geçersiz.";
+            : "❌ Raund Geçersiz veya Süre Doldu!";
           raundSonuGoster(mesaj, res.durum === "round_bitti" ? "ok" : "err", "");
         }
 
@@ -800,6 +867,7 @@
       document.getElementById("playerGuessInput").value = "";
       document.getElementById("playerGuessInput").disabled = false;
       document.getElementById("btnSubmitGuess").disabled = false;
+      document.getElementById("btnNextRound").disabled = false;
       document.getElementById("guessInputArea").classList.remove("hidden");
       document.getElementById("roundResultBox").classList.add("hidden");
 
@@ -818,7 +886,11 @@
 
         if (GAME.timer <= 0) {
           clearInterval(GAME.timerInterval);
-          raundSonuGoster("⏰ Süre doldu! Kimse bilemedi.", "err", "");
+          if (GAME.mode === "solo") {
+            raundSonuGoster("⏰ Süre doldu! Kimse bilemedi.", "err", "");
+          } else if (GAME.mpRole === "kurucu") {
+            postAPI({ action: "sureDoldu", odaKodu: GAME.roomCode });
+          }
         }
       }, 1000);
     }
@@ -879,6 +951,7 @@
         }).join("");
       }
 
+      document.getElementById("btnNextRound").disabled = false;
       document.getElementById("btnNextRound").textContent = GAME.round >= 3 ? "Oyunu Bitir & Skoru Kaydet" : "Sonraki Raund →";
       document.getElementById("roundResultBox").classList.remove("hidden");
     }
@@ -900,6 +973,9 @@
         document.getElementById("soloTeamInput").value = "";
         ekranGoster("screen-solo-setup");
       } else {
+        const btn = document.getElementById("btnNextRound");
+        btn.disabled = true;
+        btn.textContent = "Sonraki raunda geçiliyor...";
         await postAPI({ action: "sonrakiRound", odaKodu: GAME.roomCode });
       }
     }
