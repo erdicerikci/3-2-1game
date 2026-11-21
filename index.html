@@ -506,7 +506,8 @@
       "galatasaray", "fenerbahce", "besiktas", "trabzonspor", "basaksehir", "istanbul basaksehir",
       "konyaspor", "antalyaspor", "kasimpasa", "alanyaspor", "sivasspor", "kayserispor",
       "rizespor", "caykur rizespor", "gaziantep", "adana demirspor", "hatayspor", "samsunspor",
-      "eyupspor", "goztepe", "bodrum", "ankaragucu", "bursaspor", "eskisehirspor", "genclerbirligi"
+      "eyupspor", "goztepe", "bodrum", "ankaragucu", "bursaspor", "eskisehirspor", "genclerbirligi",
+      "amed", "fatih karagumruk"
     ];
 
     const TOP_6_LEAGUE_CLUBS = [
@@ -665,7 +666,7 @@
     }
 
     // =========================================================================
-    // YEREL JSON VERİTABANINI YÜKLE & 6 BÜYÜK LİG AS TAKIM HAVUZU OLUŞTUR
+    // YEREL JSON VERİTABANINI YÜKLE (players.json + guncel.json BİRLEŞTİRME)
     // =========================================================================
     function isTop6FirstTeam(clubName) {
       if (!clubName) return false;
@@ -681,28 +682,85 @@
       return "DigerTop6";
     }
 
+    function takimAdiDuzelt(takim) {
+      const temiz = String(takim || "")
+        .replace(/\s+(SK|JK|FK|AS|A\.Ş\.|FC|CF|AC|SC|SV|VfB|VfL|1\.\s*FC)$/i, "")
+        .replace(/^(FC|AC|AS|SC|SV|VfB|VfL)\s+/i, "")
+        .trim();
+
+      const harita = {
+        "Basaksehir": "Istanbul Basaksehir",
+        "Istanbul Basaksehir": "Istanbul Basaksehir",
+        "Fatih Karagumruk": "Fatih Karagumruk",
+        "Goztepe": "Goztepe",
+        "Fenerbahce": "Fenerbahce",
+        "Besiktas": "Besiktas",
+        "Galatasaray": "Galatasaray",
+        "Trabzonspor": "Trabzonspor"
+      };
+
+      const ascii = temiz
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/ı/g, "i").replace(/İ/g, "I");
+      return harita[ascii] || ascii;
+    }
+
     async function veritabaniniYukle() {
       const statusEl = document.getElementById("dbStatus");
       try {
         statusEl.innerHTML = `<span class="badge badge-load">⏳ Futbol veritabanı yükleniyor...</span>`;
-        const res = await fetch("./players.json");
+
+        const [res, guncelRes] = await Promise.all([
+          fetch("./players.json"),
+          fetch("./guncel.json").catch(() => null)
+        ]);
+
         if (!res.ok) throw new Error("players.json bulunamadı (HTTP " + res.status + ")");
 
         const list = await res.json();
+        const oyuncuMap = new Map();
+
+        for (const item of list) {
+          if (!item.n) continue;
+          const pObj = {
+            name: item.n,
+            teams: Array.isArray(item.c) ? [...item.c] : [],
+            national: item.m || ""
+          };
+          oyuncuMap.set(normalizeTr(pObj.name), pObj);
+        }
+
+        // GitHub'daki guncel.json dosyasını mevcut kadrolarla birleştir
+        if (guncelRes && guncelRes.ok) {
+          const guncelListe = await guncelRes.json();
+          for (const g of guncelListe) {
+            if (!g.n || !g.c) continue;
+            const anahtar = normalizeTr(g.n);
+            const kulup = takimAdiDuzelt(g.c);
+
+            if (oyuncuMap.has(anahtar)) {
+              const mevcut = oyuncuMap.get(anahtar);
+              const kulupVarMi = mevcut.teams.some(t => normalizeTr(t) === normalizeTr(kulup));
+              if (!kulupVarMi) {
+                mevcut.teams.push(kulup);
+              }
+            } else {
+              oyuncuMap.set(anahtar, {
+                name: g.n,
+                teams: [kulup],
+                national: g.l === "Trendyol Süper Lig" ? "Turkey" : ""
+              });
+            }
+          }
+        }
+
         PLAYERS = [];
         TEAM_TO_PLAYERS = {};
         const clubSet = new Set();
         const natSet = new Set();
-        const pairMap = {}; // "club|||nat" -> { club, nat, category, players: [] }
+        const pairMap = {};
 
-        for (const item of list) {
-          const pObj = {
-            name: item.n,
-            teams: item.c || [],
-            national: item.m || ""
-          };
-          if (!pObj.name) continue;
-
+        for (const pObj of oyuncuMap.values()) {
           pObj.teams.forEach(t => clubSet.add(t));
           if (pObj.national) natSet.add(pObj.national);
 
@@ -736,7 +794,7 @@
         baglaAutocomplete();
       } catch (err) {
         console.error(err);
-        statusEl.innerHTML = `<span class="badge badge-load">⚠️ players.json yüklenemedi, sayfayı yenileyin.</span>`;
+        statusEl.innerHTML = `<span class="badge badge-load">⚠️ Veritabanı yüklenemedi, sayfayı yenileyin.</span>`;
       }
     }
 
@@ -821,9 +879,10 @@
     }
 
     function normalizeTr(str) {
-      return str.toLowerCase()
-        .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
-        .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c");
+      return String(str || "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/ı/g, "i").replace(/İ/g, "I")
+        .toLowerCase().trim();
     }
 
     function bulOrtakOyuncular(t1, t2) {
@@ -958,7 +1017,6 @@
       const tahmin = inp.value.trim();
       if (!tahmin) return toast("Bir futbolcu adı seç.");
 
-      // Daha önce bu aşamada bulundu mu?
       if (G5.foundPlayers.some(f => f.toLowerCase() === tahmin.toLowerCase())) {
         inp.value = "";
         return toast("⚠️ Bu futbolcuyu zaten yazdın, farklı bir isim seç!");
